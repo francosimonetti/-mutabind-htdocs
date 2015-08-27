@@ -1,0 +1,138 @@
+<!doctype html>
+<html class="no-js" lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SunDDG</title>
+
+    {% load staticfiles %}
+
+    <!--<link rel="stylesheet" href="css/foundation.css" />-->
+    <!--<link rel="stylesheet" href="css/user.css" />-->
+    <!--<link rel="stylesheet" href="css/font.css" />-->
+    <!--<script src="js/vendor/modernizr.js"></script>-->
+    <link rel="stylesheet" type="text/css" href="{% static 'foundation/css/foundation.css' %}" />
+    <link rel="stylesheet" type="text/css" href="{% static 'mycss/user.css' %}" />
+    <link rel="stylesheet" type="text/css" href="{% static 'foundation-icons/foundation-icons.css' %}" />
+    <link rel="stylesheet" type="text/css" href="{% static 'mycss/hover.css' %}" media="all">
+    <script src="{% static 'foundation/js/vendor/modernizr.js' %}"></script>
+    <script src="{% static 'myjs/jquery-2.1.1.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'foundation/js/foundation/foundation.js' %}"></script>
+    <script type="text/javascript" src="{% static 'foundation/js/foundation/foundation.tooltip.js' %}"></script>
+    <script type="text/javascript" src="{% static 'foundation/js/foundation/foundation.topbar.js' %}"></script>
+    <script type="text/javascript" src="{% static 'foundation/js/foundation/foundation.accordion.js' %}"></script>
+    <script type="text/javascript" src="{% static 'foundation/js/foundation/foundation.abide.js' %}"></script>
+    <script type="text/javascript" src="{% static 'foundation/js/vendor/fastclick.js' %}"></script>
+
+    {% block custom_js %}
+    {% endblock %}
+
+
+</head>
+<body>
+
+<!-- <div class="contain-to-grid">
+            <nav class="top-bar" data-topbar role="navigation">
+              <ul class="title-area">
+                <li class="name">
+                  <h1><a href="#">SunDDG</a></h1>
+                </li>
+                <li class="toggle-topbar menu-icon"><a href="#"><span>Menu</span></a></li>
+              </ul>
+
+              <section class="top-bar-section">
+
+                <ul class="right">
+                  <li ><a href="#">Help</a></li>
+                  <li ><a href="#">Contact</a></li>
+                </ul>
+
+                <ul class="left">
+                  <li><a href="#">New Job</a></li>
+                  <li><a href="#">Results</a></li>
+                </ul>
+              </section>
+
+            </nav>
+</div> -->
+
+<div class="row" style="margin-top: 0.5rem;">
+    <div class="small-12 column" >
+        <div class="row">
+            <div class="small-8 small-centered columns">
+                <div style="text-align:center">
+                    <a href="{% url 'sunddg:index' %}" ><img src="{% static 'myimgs/CirclesDiamondBlueThiner.png' %}"  style="height:70px;width:auto;margin-top: 0.2rem;" /></a>
+                    <!-- <span class="text-center title">MutaBind</span> -->
+                    <a href="{% url 'sunddg:index' %}" ><img src="{% static 'myimgs/TitleBlues.png' %}"  style="height:70px;width:auto" /></a>
+                </div>
+            </div>
+        </div>
+        <div class="row" >
+            <div class="small-12 columns">
+                <div class="row" style="position:relative;z-index:-999">
+                    <div class="small-7 small-centered columns" style="text-align:center">
+                    <hr style="margin-top: 0.5rem;margin-bottom:0">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="small-7 small-centered columns" style="text-align:center;position:relative;z-index:999">
+                        <h5 class="text-center subheader"> Predicting Binding Affinity Changes upon Mutation </h5>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="small-12 column">
+
+        <div class="icon-bar five-up">
+            <a class="item hvr-underline-from-center" href="{% url 'sunddg:index' %}">
+                <i class="fi-home large"></i>
+                {# <img src="{% static 'foundation-icons/svgs/fi-home.svg' %}" > #}
+                <label>Home</label>
+            </a>
+            <a class="item hvr-underline-from-center" href="{% url 'sunddg:job' %}">
+                <i class="fi-clipboard-notes large"></i>
+                {# <img src="{% static 'foundation-icons/svgs/fi-clipboard-notes.svg' %}" > #}
+                <label>Results</label>
+            </a>
+            <a class="item hvr-underline-from-center" href="{% url 'sunddg:helpinfo' %}">
+                <i class="fi-wrench large"></i>
+                {# <img src="{% static 'foundation-icons/svgs/fi-wrench.svg' %}" > #}
+                <label>Help</label>
+            </a>
+            <a class="item hvr-underline-from-center" href="{% url 'sunddg:method' %}">
+                <i class="fi-widget large"></i>
+                {# <img src="{% static 'foundation-icons/svgs/fi-widget.svg' %}" > #}
+                <label>Method</label>
+            </a>
+            <a class="item hvr-underline-from-center" href="{% url 'sunddg:references' %}">
+                <i class="fi-page-multiple large"></i>
+                {# <img src="{% static 'foundation-icons/svgs/fi-page-multiple.svg' %}" > #}
+                <label>References</label>
+            </a>
+        </div>
+
+
+
+    </div>
+    <hr>
+
+    <div class="small-10 small-offset-1 end column">
+        <!--Content here-->
+        {% block main_content %}
+        <p> Content to be overwritten </p>
+        {% endblock %}
+    </div>
+</div>
+
+<div class="row">
+    <div class="small-12 column">
+    <hr>
+        <a target="_blank" href="http://www.ncbi.nlm.nih.gov/" ><img src="{% static 'myimgs/white_ncbi.png' %}" class="left" style="width:27px;height:auto;margin-right:10px"/></a> 
+        <a target="_blank" href="http://www.nih.gov/" ><img src="{% static 'myimgs/NIH_NLM.png' %}" class="left" style="width:120px;height:auto"/></a>
+        <a href="{% url 'sunddg:contact' %}" class="right">Contact Us </a>
+    </div>
+</div>

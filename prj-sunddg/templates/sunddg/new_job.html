@@ -1,0 +1,158 @@
+{% extends "sunddg/base.html" %}
+
+{% load staticfiles%}
+
+{% block custom_js %}
+<script src="{% static 'myjs/myjs.js' %}"></script>
+{% endblock %}
+
+{% block main_content %}
+<p class="text-justify"><strong>SunDDG</strong> evaluates the change in binding affinity between proteins
+caused by single-site mutations. Predictions
+are based on the crystal structure of the protein-protein complex. </p>
+
+{% if error_message %}<div data-alert class="alert-box alert radius">{{ error_message }}</div>{% endif %}
+{% if messages %}
+{% for message in messages %}
+<div class="messages row">
+    {% if message.tags  == "error" %}
+    <div class="small-12 columns alert-box alert radius">{{ message }}</div>
+    {% endif %}
+</div>
+{% endfor %}
+</ul>
+{% endif %}
+
+
+<style>
+h6.left {
+    margin-right:1rem;
+    display:block;
+}
+</style>
+
+<!-- 
+<div class="row">
+    <div class="small-8 small-centered columns">
+        <img src="{% static 'myimgs/complexCenter.png' %}"/>
+    </div>
+</div>
+<div class="row">
+    <div class="small-3 columns">
+        <img src="{% static 'myimgs/MutLeft.png' %}"/>
+    </div>
+    <div class="small-6 columns">
+        <img src="{% static 'myimgs/arrow.png' %}" style="margin-top:35px"/>
+    </div>
+    <div class="small-3 columns">
+        <img src="{% static 'myimgs/MutRight.png' %}"/>
+    </div>
+</div> -->
+
+
+<div class="row">
+    <div class="small-12 small-centered columns">
+        <img src="{% static 'myimgs/Complex2small.png' %}"/>
+    </div>
+</div>
+
+
+
+<br>
+<hr>
+<h3> Step 1 - Select a Protein Complex </h3>
+
+<br>
+
+<form action="{% url 'sunddg:upload_pdb' %}" method="post" id="pdb_form" enctype="multipart/form-data">
+    {% csrf_token %}
+    <input type="hidden" id="example" name="example" value="0">
+    <div class="row">
+        <div class="small-3 columns">
+            <label for="pdb_id_input" class="left" style="font-size:1.3rem">Input a PDB code:</label>
+        </div>
+        <div class="small-3 columns">
+            <input type="text" id="pdb_id_input" name="pdb_id" style="margin-bottom:0.5rem" placeholder="PDB id code [4-letter code]" class="radius" />
+            <span class="subheader"> Example: <a id="load_example">1CSE</a></span>
+        </div>
+        <div class="small-1 columns">
+                <div class="switch radius small ">
+                    <input id="pdb_bio" type="radio" checked name="pdb_mol" value="bio">
+                    <label for="pdb_bio"></label>
+                </div>
+                <div class="switch radius small ">
+                    <input id="pdb_asu" type="radio" name="pdb_mol" value="asu">
+                    <label for="pdb_asu"></label>
+                </div>
+        </div>
+        <div class="small-5 columns">
+            <h6 class="">Bioassembly <span data-tooltip data-options="width:300" aria-haspopup="true" class="has-tip radius" title="For multiple bioassemblies, default bioassembly will be used"><i class="fi-info small"></i></span></h6>
+            <h6 class="left">Asymmetric Unit</h6>
+        </div>
+        <!--<div class="small-3 end columns">-->
+            <!--<p>Asymetric Unit </p>-->
+            <!--<p>Bioassembly</p>-->
+        <!--</div>-->
+    </div>
+    <div class="row">
+        <div class="small-12 columns" >
+            <div id="pdb_description"></div>
+        </div>
+    </div>
+    <div class="row">
+        <div data-alert class="small-12 columns">
+            <div id="pdb_warning" data-alert class="small-12 columns">
+                <!-- <p id="pdb_warning"></p> -->
+            </div>
+        </div>
+    </div>
+    <hr>
+    <div class="row">
+        <div class="small-3 columns">
+            <label for="pdb_file_input" class="left" style="font-size:1.3rem">Upload a PDB file:</label>
+        </div>
+        <div class="small-3 columns end">
+            <input type="file" id="pdb_file_input" name="pdb_file" class="radius"/>
+        </div>
+    </div>
+    <hr>
+    <div class="row">
+     <div class="large-12 columns" >
+      <label style="font-size:1.1rem">Additional Options</label>
+      <input id="isPI" type="checkbox" name="isPI" value="isPI"><label style="font-size:1.1rem" for="isPI">Is your complex a protease-inhibitor complex? <span data-tooltip data-options="width:300" aria-haspopup="true" class="has-tip radius" title="This is a special model that gives better predictions for protease inhibitor complexes. Check this box if you want to use it."><i class="fi-info small"></i></span></label>
+      <button type="submit" class="button radius right" id="submit_button">Next</button>
+    </div>
+  </div>
+ <!--  <br>
+    <div class="row">
+        <div class="small-12 columns">
+            <button type="submit" class="button radius right" if="submit_button">Next</button>
+        </div>
+    </div> -->
+    <div class="row">
+        <div id="console" data-alert class="small-12 columns"></div>
+    </div>
+</form>
+
+<script>
+
+$(document).foundation();
+
+$(document).ready(function(){
+
+$("#pdb_form").on('submit', function(){
+    $("#console").append("<div data-alert class=\"alert-box secondary radius\"> <img src=\"{% static 'myimgs/ajax-loader.gif' %}\" /> Uploading data ... This may take a few seconds </div>");
+});
+
+
+$("#load_example").click(function(){
+    $("#pdb_id_input").val("1CSE")
+    $("#example").val("1")
+    $("#pdb_id_input").trigger("propertychange")
+    return false;
+})
+
+});
+</script>
+
+{% endblock %}

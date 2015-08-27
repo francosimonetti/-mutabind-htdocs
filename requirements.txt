@@ -1,0 +1,5 @@
+Django
+django-core
+django-mysql
+flup
+MySQL-python

@@ -1,0 +1,144 @@
+<!doctype html>
+<html class="no-js" lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SunDDG</title>
+
+    {% load staticfiles %}
+
+    <!--<link rel="stylesheet" href="css/foundation.css" />-->
+    <!--<link rel="stylesheet" href="css/user.css" />-->
+    <!--<link rel="stylesheet" href="css/font.css" />-->
+    <!--<script src="js/vendor/modernizr.js"></script>-->
+    <link rel="stylesheet" type="text/css" href="{% static 'foundation/css/foundation.css' %}" />
+    <link rel="stylesheet" type="text/css" href="{% static 'mycss/user.css' %}" />
+    <link rel="stylesheet" type="text/css" href="{% static 'mycss/font.css' %}" />
+    <link rel="stylesheet" type="text/css" href="{% static 'foundation-icons/foundation-icons.css' %}" />
+    <script src="{% static 'foundation/js/vendor/modernizr.js' %}"></script>
+    <script src="{% static 'myjs/jquery-2.1.1.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'foundation/js/foundation/foundation.js' %}"></script>
+    <script type="text/javascript" src="{% static 'foundation/js/foundation/foundation.tooltip.js' %}"></script>
+    <script type="text/javascript" src="{% static 'foundation/js/foundation/foundation.topbar.js' %}"></script>
+    <script type="text/javascript" src="{% static 'foundation/js/foundation/foundation.accordion.js' %}"></script>
+    <script type="text/javascript" src="{% static 'foundation/js/foundation/foundation.abide.js' %}"></script>
+    <script type="text/javascript" src="{% static 'foundation/js/vendor/fastclick.js' %}"></script>
+
+    {% block custom_js %}
+    {% endblock %}
+
+
+</head>
+<body>
+
+<!-- <div class="contain-to-grid">
+            <nav class="top-bar" data-topbar role="navigation">
+              <ul class="title-area">
+                <li class="name">
+                  <h1><a href="#">SunDDG</a></h1>
+                </li>
+                <li class="toggle-topbar menu-icon"><a href="#"><span>Menu</span></a></li>
+              </ul>
+
+              <section class="top-bar-section">
+
+                <ul class="right">
+                  <li ><a href="#">Help</a></li>
+                  <li ><a href="#">Contact</a></li>
+                </ul>
+
+                <ul class="left">
+                  <li><a href="#">New Job</a></li>
+                  <li><a href="#">Results</a></li>
+                </ul>
+              </section>
+
+            </nav>
+</div> -->
+
+<div class="row">
+    <div class="small-3 column">
+        <p class="text-right"><img src="{% static 'mycss/WTprot.png' %}" style="height:auto;width:90%"></p>
+    </div>
+    <div class="small-6 column" >
+        <div class="row">
+            <div class="small-12">
+                <h1 class="text-center title">SunDDG</h1>
+            </div>
+           <!--  <hr class="title"> -->
+        </div>
+        <div class="row">
+            <div class="small-12 columns">
+         <!--        <div class="row">
+                    <div class="small-6 small-centered columns" style="text-align:center">
+                        <img src="{% static 'mycss/numerator.png' %}" >
+                    </div>
+                </div> -->
+                <div class="row">
+                    <div class="small-12 small-centered columns" style="text-align:center">
+                        <img src="{% static 'mycss/arrow.png' %}" >
+                        <!-- <svg width="100%" height="29">
+                            <defs>
+                                <marker id="arrow" markerWidth="13" markerHeight="13" refx="2" refy="6" orient="auto">
+                                    <path d="M2,2 L2,11 L10,6 L2,2" style="fill:black;" />
+                                </marker>
+                            </defs>
+                            <path d="M0%,14% L300,14"
+                                  style="stroke:black; stroke-width: 3px; fill: black; marker-end: url(#arrow);"
+                            />
+                        </svg> -->
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="small-12 small-centered columns" style="text-align:center">
+                        <img src="{% static 'mycss/denominator.png' %}" style="height:auto;width:30%" >
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="small-12 small-centered columns" style="text-align:center">
+                        <h5 class="text-center subheader"> Predicting Binding Affinity Changes upon Mutation </h5>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <div class="small-3 column">
+        <p class="text-left"><img src="{% static 'mycss/MUTprot.png' %}" style="height:auto;width:90%"></p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="small-12 column">
+
+        <div class="icon-bar four-up">
+            <a class="item" href="{% url 'sunddg:index' %}">
+                <img src="{% static 'foundation-icons/svgs/fi-home.svg' %}" >
+                <label>Home</label>
+            </a>
+            <a class="item" href="{% url 'sunddg:job' %}">
+                <img src="{% static 'foundation-icons/svgs/fi-info.svg' %}" >
+                <label>Results</label>
+            </a>
+            <a class="item" href="{% url 'sunddg:helpinfo' %}">
+                <img src="{% static 'foundation-icons/svgs/fi-wrench.svg' %}" >
+                <label>Help</label>
+            </a>
+            <a class="item" href="{% url 'sunddg:contact' %}">
+                <img src="{% static 'foundation-icons/svgs/fi-torsos.svg' %}" >
+                <label>Contact</label>
+            </a>
+        </div>
+
+
+
+    </div>
+    <hr>
+
+    <div class="small-10 small-offset-1 end column">
+        <!--Content here-->
+        {% block main_content %}
+        <p> Content to be overwritten </p>
+        {% endblock %}
+    </div>
+</div>

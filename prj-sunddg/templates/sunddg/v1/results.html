@@ -1,0 +1,201 @@
+{% extends "sunddg/base.html" %}
+
+{% load staticfiles%}
+
+
+
+{% block main_content %}
+
+
+<script>
+
+
+
+var jobid = "{{jobid}}"
+
+objstr = localStorage.getItem("recent_jobs")
+if (objstr == "")
+{ objstr = null}
+old_jobs = objstr
+if (old_jobs != null)
+{
+    o_jobs = old_jobs.split(",")    
+}
+else
+{
+    o_jobs = []
+}
+
+
+if ($.inArray(jobid, o_jobs) < 0)
+{
+    o_jobs.push(jobid)
+    //console.log(o_jobs)
+}
+
+n_jobs = []
+for (var i in o_jobs)
+{
+    job = o_jobs[i]
+    //console.log(job)
+    if (job != "")
+    {
+        date1 = new Date(job.substr(0,4)+"-"+job.substr(4,2)+"-"+job.substr(6,2)+"T"+job.substr(8,2)+":"+job.substr(10,2))
+        aux = new Date()
+        date2 = new Date( aux.getFullYear()+"-"+(aux.getMonth()+1)+"-"+aux.getDate())
+        var timeDiff = Math.abs(date2.getTime() - date1.getTime());
+        var diffDays = Math.ceil(timeDiff / (1000 * 3600 * 24)); 
+        if (diffDays < 8)
+        {
+            n_jobs.push(String(job))
+        }    
+    }
+    
+}
+
+
+new_jobs = n_jobs.join(",")    
+localStorage.setItem("recent_jobs", new_jobs)
+
+
+
+
+
+</script>
+
+{% load replace_decrease %}
+
+<ul class="breadcrumbs">
+  <li><a href="{% url 'sunddg:index' %}">Home</a></li>
+  <li class="unavailable"><a href="#">Step 1</a></li>
+  <li class="unavailable"><a href="#">Step 2</a></li>
+  <li class="current"><a href="{% url 'sunddg:results' job_object.job%}">Results</a></li>
+</ul>
+
+<h3> {{ main_title }}</h3>
+<h6>{{ content }}</h6>
+<br>
+<h4 class="text-center"> Your Job id is {{jobid}}</h4>
+<br>
+<p>Please be sure to bookmark this page or take note of the job id number.</p>
+<hr>
+
+
+<h4>Summary</h4>
+<div class="row">
+    <div class="small-6 columns">
+        <table>
+            <tbody>
+            
+            <tr>
+            {% if pdb_id %}
+                <th>PDB id</th>
+            {% endif %}
+            {% if pdb_file %}
+                <th>PDB file</h6></th>
+            {% endif %}
+                <th>Partner 1</th>
+                <th>Partner 2</th>
+                
+            </tr>
+            <tr>
+            {% if pdb_id %}
+                <td><h6 class="subheader text-center">{{pdb_id}}</h6></td>
+            {% endif %}
+            {% if pdb_file %}
+                <td><h6 class="subheader text-center">{{pdb_file}}</h6></td>
+            {% endif %}
+                <td><h6 class="subheader text-center">{{ p1 }}</h6></td>
+                <td><h6 class="subheader text-center">{{ p2 }}</h6></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="row">
+    <div class="small-4 columns end">
+        <table>
+            <thead>
+                <th>Mutated Chain</th>
+                <th>Mutation</th>
+                {% if status >= 2 %}
+                <th>&Delta;&Delta;G</th>
+                <th>Mutant PDB</th>
+                {% endif %}
+            </thead>
+            <tbody>
+            {% for res in results %}
+            <tr>
+                <td class="subheader text-center">{{res.target_chain|replace_decrease}}</td>
+                <td class="subheader text-center">{{res.mutation}}</td>
+                {% if res.ddg > -999 %}
+                <td class="subheader text-center"><b>{{res.ddg}}</b></td>
+                <td class="subheader text-center"><a href="{% url 'sunddg:get_mutant' job_object.job res.id %}" target="_blank"> PDB </a></td>
+                {% endif %}
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<hr>
+
+{% if status < 2 %}
+
+    {% if email %}
+
+        <form data-abide action="{% url 'sunddg:save_email' job_object.job %}" method="post" id="email_form" enctype="multipart/form-data">
+            {% csrf_token %}
+            <p> <b>Notify to:</b> {{ email |safe}}</p>
+            <div class="row">
+                  <div class="small-9 columns">
+                    <label><b>Change Email Address (Optional)</b>
+                        <input type="email" name="email" placeholder="email@example.com" class="radius">
+                    </label>
+                    <small class="error">A valid email address is required.</small>
+                  </div>
+          </div>
+        <button type="submit" class="button tiny radius" id="submit_partners">Notify me!</button>
+        </form>
+        
+    {% else %}
+
+        <form data-abide action="{% url 'sunddg:save_email' job_object.job %}" method="post" id="email_form" enctype="multipart/form-data">
+            {% csrf_token %}
+            <p> You can also leave us your email and we will let you know when your job is done calculating</p>
+            <div class="row">
+                  <div class="small-9 columns">
+                    <label><b>Email Address (Optional)</b>
+                        <input type="email" name="email" placeholder="email@example.com" class="radius">
+                    </label>
+                    <small class="error">A valid email address is required.</small>
+                  </div>
+          </div>
+        <button type="submit" class="button tiny radius" id="submit_partners">Notify me!</button>
+        </form>
+
+
+    {% endif %}
+
+{% endif %}
+
+
+
+{% if status < 2 %}
+
+<div class="row">
+    <div class="small-12 columns">
+        <p>This page will reload automatically in 5 minutes.</p>
+    </div>
+</div>
+
+<script>
+    setTimeout("location.reload(true);",300000);
+    $(document).foundation();
+</script>
+
+{% endif %}
+
+{% endblock %}

@@ -1,0 +1,290 @@
+{% extends "sunddg/base.html" %}
+
+{% load staticfiles%}
+
+
+
+{% block main_content %}
+
+
+<script>
+
+
+
+var jobid = "{{jobid}}"
+
+{% if job_object.description %}
+    var job_description = "{{job_object.description | escapejs}}"
+{% endif %}
+
+objstr = localStorage.getItem("recent_jobs")
+var job_descriptions = localStorage.getItem("job_descriptions")
+
+if (objstr == "")
+{ objstr = null}
+old_jobs = objstr
+if (old_jobs != null)
+{
+    o_jobs = old_jobs.split(",")    
+}
+else
+{
+    o_jobs = []
+}
+
+if (job_descriptions == null)
+{
+    job_descriptions = {}
+}
+else
+{
+    job_descriptions = JSON.parse(job_descriptions)
+}
+
+
+if ($.inArray(jobid, o_jobs) < 0)
+{
+    o_jobs.push(jobid)
+    //console.log(o_jobs)
+}
+
+n_jobs = []
+n_jobs_desc = {}
+
+{% if job_object.description %}
+    n_jobs_desc[jobid] = job_description
+{% endif %}
+
+for (var i in o_jobs)
+{
+    job = o_jobs[i]
+    //console.log(job)
+    //console.log(job_descriptions[job])
+    if (job != "")
+    {
+        date1 = new Date(job.substr(0,4)+"-"+job.substr(4,2)+"-"+job.substr(6,2)+"T"+job.substr(8,2)+":"+job.substr(10,2))
+        aux = new Date()
+        date2 = new Date( aux.getFullYear()+"-"+ ("00"+(aux.getMonth()+1)).slice(-2)+"-"+aux.getDate())
+        var timeDiff = Math.abs(date2.getTime() - date1.getTime());
+        var diffDays = Math.ceil(timeDiff / (1000 * 3600 * 24)); 
+        if (diffDays < 8)
+        {
+            n_jobs.push(String(job))
+            if (job_descriptions[job] != null && job_descriptions[job] != undefined)
+            {
+                n_jobs_desc[job] = job_descriptions[job]
+            }
+        }    
+    }
+    
+}
+
+
+new_jobs = n_jobs.join(",")    
+localStorage.setItem("recent_jobs", new_jobs)
+localStorage.setItem("job_descriptions", JSON.stringify(n_jobs_desc))
+
+
+
+
+
+</script>
+
+{% load replace_decrease %}
+
+<!-- <ul class="breadcrumbs">
+  <li class="unavailable"><a href="#">Step 1</a></li>
+  <li class="unavailable"><a href="#">Step 2</a></li>
+  <li class="unavailable"><a href="#">Step 3</a></li>
+  <li class="current"><a href="{% url 'sunddg:results' job_object.job %}">
+  {% if job_object.status == 2 %}
+    Results
+  {% elif job_object.status >= -1 and job_object.status < 2 %}
+    Calculating...
+  {% elif job_object.status == -999 %}
+    Error
+  {% endif %} 
+  </a></li>
+</ul> -->
+
+
+<h2> {{ main_title }}</h2>
+{% if content%}
+    <p class="text-center"><img src="{%  static 'myimgs/atom.GIF' %}" /></p>
+{% endif %}
+{% if job_object.status == -999 %}
+    <h4> There was an error while processing your results</h4>
+    <h5>Please contact us so we can fix it</h5>
+    <h5> Your Job Id is {{job_object.job}}</h5>
+{% endif %}
+
+{% if job_object.status < 2 and job_object.status > -100 %}
+
+    
+    {% if email %}
+        <form data-abide action="{% url 'sunddg:save_email' job_object.job %}" method="post" id="email_form" enctype="multipart/form-data">
+            {% csrf_token %}
+            <p style="margin-bottom:0"> <b>Notify to:</b> {{ email |safe}} <button class="button tiny radius" id="change_email">Change</button></p>
+            <div class="row hide" id="email_field">
+                <div class="small-9 columns">
+                    <label><b>Change Email Address (Optional)</b>
+                        <input type="email" name="email" placeholder="email@example.com" class="radius">
+                    </label>
+                    <small class="error">A valid email address is required.</small>
+                </div>
+                <div class="small-3 columns">
+                    <button type="submit" class="button tiny radius" style="display:none;margin-bottom:0;margin-top:1.4rem" id="submit_email">Notify me!</button>
+                </div>
+          </div>
+        
+        </form>
+        <script>
+            $("#change_email").on("click", function(){
+                $("#email_field").removeClass("hide");
+                $("#submit_email").css("display", "inherit");
+                $("#change_email").css("display", "none");
+                return false;
+            });
+        </script>
+    {% else %}
+    <p>You can bookmark this page or leave us your email and we will notify you when it's ready.</p>
+        <form data-abide action="{% url 'sunddg:save_email' job_object.job %}" method="post" id="email_form" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="row">
+                <div class="small-9 columns">
+                    <label><b>Email Address (Optional)</b>
+                        <input type="email" name="email" placeholder="email@example.com" class="radius">
+                    </label>
+                    <small class="error">A valid email address is required.</small>
+                </div>
+                <div class="small-3 columns">
+                    <button type="submit" class="button tiny radius" style="margin-bottom:0;margin-top:1.4rem" id="submit_email">Notify me!</button>
+                </div>
+          </div>
+        <!-- <button type="submit" class="button tiny radius" id="submit_email">Notify me!</button> -->
+        </form>
+
+
+    {% endif %}
+
+    {% if job_object.description %}
+        <form data-abide action="{% url 'sunddg:save_description' job_object.job %}" method="post" id="desc_form" enctype="multipart/form-data">
+            {% csrf_token %}
+            <p> <b>Job description:</b> {{ job_object.description |safe}} </p>        
+        </form>
+    {% else %}
+    <p>You can add a description to your job so it is easier to remember.</p>
+        <form data-abide action="{% url 'sunddg:save_description' job_object.job %}" method="post" id="desc_form" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="row">
+                <div class="small-9 columns">
+                    <label><b>Job Description (Optional)</b>
+                        <input type="text" name="description" pattern="alfanumerico" class="radius">
+                    </label>
+                    <small class="error">Only alphanumeric characters are allowed.</small>
+                </div>
+                <div class="small-3 columns">
+                    <button type="submit" class="button tiny radius" style="margin-bottom:0;margin-top:1.4rem" id="submit_email">Save</button>
+                </div>
+          </div>
+        <!-- <button type="submit" class="button tiny radius" id="submit_email">Notify me!</button> -->
+        </form>
+    {% endif %}
+
+{% endif %}
+
+{% if job_object.status > -100 %}
+
+<h4 class="subheader">Job Summary {% if job_object.description %} - {{job_object.description|safe}} {% endif %}</h4>
+<div class="row">
+    <div class="small-6 columns">
+        <ul>
+            {% if pdb_id %}
+                <li><b>PDB id:</b> {{pdb_id|upper}}</li>
+            {% endif %}
+            {% if pdb_file %}
+                <li><b>PDB file:</b> {{pdb_file}}</li>
+            {% endif %}
+                <li><b>Partner 1:</b> {{ p1 }}</li>
+                <li><b>Partner 2:</b> {{ p2 }}</li>
+        </ul>
+    </div>
+</div>
+
+<div class="row">
+    <div class="{% if job_object.status >= 2 %} small-12 small-centered columns end {% else %} small-4 columns end {% endif %}">
+        <table {% if job_object.status >= 2 %} style="margin:auto;margin-bottom:2rem" {% endif %}>
+            <thead>
+                <th class="text-center">Mutated Chain</th>
+                <th class="text-center">Mutation</th>
+                {% if job_object.status >= 2 %}
+                <th class="text-center">&Delta;&Delta;G</th>
+                <th class="text-center"> Interface? </th>
+                <th class="text-center"> Deleterious?</th>
+                <th class="text-center"> Confidence </th>
+                <th class="text-center" style="white-space:nowrap">Mutant PDB</th>
+                {% endif %}
+            </thead>
+            <tbody>
+            {% for res in results %}
+            <tr>
+                <td class="subheader text-center">{{res.target_chain|replace_decrease}}</td>
+                <td class="subheader text-center">{{res.mutation}}</td>
+                {% if job_object.status >= 2 %}
+                <td class="subheader text-center"><b>{{res.ddg}}</b></td>
+                <td class="text-center"> 
+                    {% if res.interface > 0 %}
+                        Yes
+                    {% else %}
+                        No
+                    {% endif %}</td>
+                <td class="text-center">{% if res.deleterious > 0 %}
+                        Yes
+                    {% else %}
+                        No
+                    {% endif %}</td>
+                <td class="text-center">{{res.confidence}}</td>
+                <td class="subheader text-center" style="white-space:nowrap"><a href="{% url 'sunddg:download_pdb_mut' job_object.job res.id %}">Download</a></td> 
+                {% endif %}
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if job_object.status >= 2 %}
+<form action="{% url 'sunddg:download_table' job_object.job %}" method="post">
+    {% csrf_token %}
+    <button type="submit" class="radius tiny" id="download_table">Download Table</button>
+</form>
+{% endif %}
+
+
+
+{% endif %}
+
+
+{% if job_object.status < 2 and job_object.status > -100 %}
+<hr>
+<div class="row">
+    <div class="small-12 columns">
+        <p>This page will reload automatically in 5 minutes.</p>
+    </div>
+</div>
+
+<script>
+    setTimeout("location.reload(true);",300000);
+    $(document).foundation({
+      abide : {
+        patterns: {
+          pdb: /^[1-9]{1}[a-zA-Z0-9 _-]{3}$/,
+          alfanumerico:/^[a-zA-Z0-9 _-]+$/
+        }
+      }
+    });
+</script>
+
+{% endif %}
+
+{% endblock %}

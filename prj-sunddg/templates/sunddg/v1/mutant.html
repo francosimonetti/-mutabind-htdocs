@@ -1,0 +1,89 @@
+{% extends "sunddg/base.html" %}
+
+{% load staticfiles%}
+
+
+
+{% block main_content %}
+
+
+<script>
+
+
+
+var jobid = "{{jobid}}"
+
+objstr = localStorage.getItem("recent_jobs")
+if (objstr == "")
+{ objstr = null}
+old_jobs = objstr
+if (old_jobs != null)
+{
+    o_jobs = old_jobs.split(",")    
+}
+else
+{
+    o_jobs = []
+}
+
+
+if ($.inArray(jobid, o_jobs) < 0)
+{
+    o_jobs.push(jobid)
+    //console.log(o_jobs)
+}
+
+n_jobs = []
+for (var i in o_jobs)
+{
+    job = o_jobs[i]
+    //console.log(job)
+    if (job != "")
+    {
+        date1 = new Date(job.substr(0,4)+"-"+job.substr(4,2)+"-"+job.substr(6,2)+"T"+job.substr(8,2)+":"+job.substr(10,2))
+        aux = new Date()
+        date2 = new Date( aux.getFullYear()+"-"+(aux.getMonth()+1)+"-"+aux.getDate())
+        var timeDiff = Math.abs(date2.getTime() - date1.getTime());
+        var diffDays = Math.ceil(timeDiff / (1000 * 3600 * 24)); 
+        if (diffDays < 8)
+        {
+            n_jobs.push(String(job))
+        }    
+    }
+    
+}
+
+
+new_jobs = n_jobs.join(",")    
+localStorage.setItem("recent_jobs", new_jobs)
+
+
+
+
+
+</script>
+
+{% load replace_decrease %}
+
+
+<h3> Result {{res_obj.mutation}}</h3>
+<br>
+<h4 class="text-center"> Your Job id is {{jobid}}</h4>
+<br>
+<p>Please be sure to bookmark this page or take note of the job id number.</p>
+<hr>
+
+
+<hr>
+<ul>
+    <li>{{res_obj.mutation}}</li>
+    <li>{{res_obj.ddg}}</li>
+    <li>{{res_obj.target_chain}}</li>
+    <li>{{resnum}}</li>
+</ul>
+<textarea>
+{{pdbtext}}
+</textarea>
+
+
+{% endblock %}

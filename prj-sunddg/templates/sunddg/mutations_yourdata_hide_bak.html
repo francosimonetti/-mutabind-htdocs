@@ -1,0 +1,864 @@
+{% extends "sunddg/base.html" %}
+
+{% load staticfiles%}
+
+{% block custom_js %}
+<script type="text/javascript" src="{% static 'myjs/glmol/js/Three49custom.js' %}" ></script>
+<script type="text/javascript" src="{% static 'myjs/glmol/js/GLmol.js' %}" ></script>
+{% endblock %}
+
+{% load replace %}
+{% load replace_decrease %}
+{% load get_at_index_simple %}
+
+{% block main_content %}
+<style>
+    #addremove.icon-bar {
+    background: #FFBF00; }
+    #addremove.icon-bar > * label {
+    color: #FFBF00; }
+    #addremove.icon-bar > * i {
+    color: #FFBF00; }
+    #addremove.icon-bar > a:hover {
+    background: #FF8000; }
+    #addremove.icon-bar > a:hover label {
+    color: #FFBF00; }
+    #addremove.icon-bar > a:hover i {
+    color: #FFBF00; }
+    #addremove.icon-bar > a.active {
+    background: #FF8000; }
+    #addremove.icon-bar > a.active label {
+    color: #FFFFFF; }
+    #addremove.icon-bar > a.active i {
+    color: #FFFFFF; }
+      .data_panel{ border-color:#CCCCCC; background:#FFFFFF;max-height:340px;}
+    /*  #partner1 {background:rgba(0, 116, 217, 0.4)}
+      #partner2 {background:rgba(57, 204, 204, 0.4)}*/
+    .small {
+      font-size: 20px;
+      padding: 0 5px;
+    }
+
+    #headerpanel .columns{
+        display: table;
+        height: 100%;                       
+    }
+
+    #headerpanel .spanMiddle {
+        display: table-cell;
+        vertical-align: middle;     
+        padding:0;
+        margin:0;
+        max-height:340px;
+    }
+</style>
+
+{% if error_message %}<div data-alert class="alert-box alert radius">{{ error_message }}</div>{% endif %}
+
+{% if messages %}
+{% for message in messages %}
+<div class="messages row">
+    {% if message.tags  == "error" %}
+    <div class="small-12 columns alert-box alert radius">{{ message }}</div>
+    {% endif %}
+</div>
+{% endfor %}
+</ul>
+{% endif %}
+
+
+
+<!-- <ul class="breadcrumbs">
+  <li><a href="{% url 'sunddg:index' %}">Step 1</a></li>
+  <li><a href="{% url 'sunddg:set_partners' job_object.job %}">Step 2</a></li>
+  <li class="current">Step 3</li>
+</ul> -->
+
+<h2 > Step 3 - Select Mutations </h2>
+<!-- <hr style="margin-top:0;margin-bottom:0.5rem">
+ -->
+
+
+<div class="row"> 
+    <div class="small-6 columns panel radius data_panel">
+        <p style="margin-bottom:0rem">
+            {% if pdbid %}
+                <b>PDB id</b>: <a target="_blank" href="http://www.rcsb.org/pdb/explore/explore.do?structureId={{pdbid}}">{{pdbid|upper}}</a>
+                <!-- Check Interactions at MMDB<a target="_blank" href="http://www.ncbi.nlm.nih.gov/Structure/mmdb/mmdbsrv.cgi?uid={{pdbid|safe}}"><i class="fi-page-export small"></i></a> -->
+            {% else %}        
+                <b>PDB file</b>: {{pdb_filename}}
+            {% endif %}
+            <button id="info_status" style="margin-bottom:0;padding-top:0.2rem;padding-bottom:0.2rem;margin-top:0.2rem" class="button round tiny right">Hide</button><!-- <i  class="fi-x large"></i> -->
+        </p>
+        <div class="row" id="info_data"  style="margin-top:0.4rem">
+            <div class="small-12 columns">
+                <p class="overflowtext">
+                    <b>Partner 1</b><br>
+                    {% for chain  in partner1 %}
+                        <span class="chain-{{chain}}">&nbsp;&nbsp;</span> Chain {{chain|replace_decrease}} <span class="chain-{{chain|replace:"/_\d+$//"}}" title=""></span><br> {# : {{content|get_at_index_simple:chain|length}} residues. #}
+                    {% endfor %}
+                    <br>
+                    <b>Partner 2</b><br>
+                    {% for chain  in partner2 %}
+                        <span class="chain-{{chain}}">&nbsp;&nbsp;</span> Chain {{chain|replace_decrease}} <span class="chain-{{chain|replace:"/_\d+$//"}}" title=""></span><br> {# : {{content|get_at_index_simple:chain|length}} residues. #}
+                    {% endfor %}
+                    </p>
+                    {% if job_object.firstmodelwarning > 0%}
+                        <br>
+                        <p> **Warning** <br>
+                        The uploaded PDB contained more than one MODEL. First model has been used as default</p>
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="small-6 columns">
+        <div class="row">
+            <div class="small-12 columns">
+                <div id="pdb_container" style="width: 100%; height: 340px; background-color: black;"></div> <textarea id="pdb_container_src" style="display: none;">
+                {% if pdbid %}
+
+                {% else %}
+                {{pdbfile}}
+                {% endif %}
+                </textarea>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="small-12 columns">
+<!--                     <input type="radio" name="pdb_container_mouseMode" value="0" checked>Rotate<br>
+                <input type="radio" name="pdb_container_mouseMode" value="1">Translate<br>
+                <input type="radio" name="pdb_container_mouseMode" value="2">Zoom<br>
+                <input type="radio" name="pdb_container_mouseMode" value="3">Slab<br><br> -->
+                <button style="margin-top:0.5rem" class="button radius tiny right" id="reset_zoom">Reset Zoom</button>
+                <button style="margin-top:0.5rem;margin-right:2px" class="button radius tiny right" id="color_by_partner">Color by Partner</button>
+                <button style="margin-top:0.5rem;margin-right:2px" class="button radius tiny right" id="color_by_chain">Color by Chain</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<hr style="margin-top:0">
+<div class="row">
+    <div class="small-3 columns text-center"><h5>Chain to Mutate <!-- <span data-tooltip aria-haspopup="true" class="has-tip" title="Select one PDB chain to mutate one residue"><i class="fi-info small"></i></span> --></h5></div>
+    <div class="small-3 columns text-center"><h5>Residue <!-- <span data-tooltip aria-haspopup="true" class="has-tip" title="Select a residue to mutate. You need to specify which chain first"><i class="fi-info small"></i></span> --></h5></div>
+    <div class="small-3 columns text-center"><h5>Mutant Residue <!-- <span data-tooltip aria-haspopup="true" class="has-tip" title="Choose one of the 20-standard residues to mutate your selected residue"><i class="fi-info small"></i></span> --></h5></div>
+    <div class="small-3 columns text-center"><h5>View Mutation in 3D <span data-tooltip aria-haspopup="true" class="has-tip" title="Click 'View' to visualize the Wild Type residue to be mutated in the 3D structure"><i class="fi-info small"></i></span></h5></div>
+</div>
+<form action="{% url 'sunddg:save_mutations' job_object.job %}" method="post">
+    {% csrf_token %}
+    <div id="mutations_list">
+        {% for it in loop_count %}
+        <div class="row" id="{{it}}">
+            <div class="small-3 columns">
+                <select class="chain_select radius" name="chain_select{{it}}">
+                    <option value="-999">Select Chain</option>
+                    {% for chain in chains.chain_models %}
+                    <option value="{{chain}}">Chain {{chain|replace_decrease}}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="small-3 columns" >
+                <select name="res_select{{it}}" class="radius" >
+                    <option value="-999"> Select a Residue </option>
+                </select>
+            </div>
+            <div class="small-3 columns">
+                <select name="mut_select{{it}}" class="radius" >
+                    <option value="-999"> Mutate for.. </option>
+                </select>
+            </div>
+            <div class="small-3 columns text-center">
+                <button  class="draw_mut button tiny radius">View</button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    <input id="num_muts" name="num_muts" type="hidden" value="1"/>
+    <br>
+    <div class="row">
+        <div class="small-2 columns right">
+        
+            <div class="radius" id="addremove">
+                <a id="delM" class="button radius" style="padding:0.75rem" data-tooltip aria-haspopup="true" title="Remove Mutation">
+                <i class="fi-minus small"></i></a>
+                <a id="addM" class="button radius" style="padding:0.75rem" data-tooltip aria-haspopup="true" title="Add Mutation">
+                <i class="fi-plus small"></i></a>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="small-4 columns right text-right">
+            Add or Remove Mutations <span data-tooltip aria-haspopup="true" class="has-tip tip-top" title="<p>When <b>more than one mutation</b> is specified, each will be treated independently of the others. That is, each will be considered a point mutations disregarding the effect of other mutations</p>"><i class="fi-info small"></i></span>
+        </div>
+    </div>
+
+    <button type="submit" class="radius" id="submit_partners">Submit Job</button>
+</form>
+
+<script>
+
+
+    var pdb_selected_residue = "";
+    var pdb_selected_chain =  "";
+
+    var chains_residues = {{ chains.chains_residues | safe }};
+    var partners = { "p1":{{ partner1 |safe}} , "p2" : {{ partner2 |safe}} };
+
+    var dictionary = {
+        "ALA" : "A",
+        "ARG" : "R",
+        "ASN" : "N",
+        "ASP" : "D",
+        "CYS" : "C",
+        "GLU" : "E",
+        "GLN" : "Q",
+        "GLY" : "G",
+        "HIS" : "H",
+        "ILE" : "I",
+        "LEU" : "L",
+        "LYS" : "K",
+        "MET" : "M",
+        "PHE" : "F",
+        "PRO" : "P",
+        "SER" : "S",
+        "THR" : "T",
+        "TRP" : "W",
+        "TYR" : "Y",
+        "VAL" : "V"
+    }
+
+
+$(document).foundation({
+  accordion: {
+    // specify the class used for accordion panels
+    content_class: 'content',
+    // specify the class used for active (or open) accordion panels
+    active_class: 'active',
+    // allow multiple accordion panels to be active at the same time
+    multi_expand: true,
+    // allow accordion panels to be closed by clicking on their headers
+    // setting to false only closes accordion panels when another is opened
+    toggleable: true,
+    callback: function (accordion) {
+        if ($(accordion).hasClass("active"))
+        {
+            $("#acc_status").removeClass()
+            $("#acc_status").addClass("fi-x large right")
+        }
+        else
+        {
+            $("#acc_status").removeClass()
+            $("#acc_status").addClass("fi-plus large right")
+        }
+    }
+  }
+});
+
+
+var unit = "{{unit}}";
+
+
+var chain_data = {{content|safe}};
+
+var perchain_colors = [];
+var colors = [0.2, 0.8] 
+
+var acum = chain_data["chain_models"].length
+var chain_num = chain_data["chains"].length;
+var perchain_colors = {}
+var hex_perchain_colors = {}
+var hex_perpartner_colors = {}
+
+for (var i = 0; i<acum; i++)
+{
+    perchain_colors[chain_data["chain_models"][i]] = ( 1/acum * i)
+
+    var color = new TCo(0);
+    color.setHSV( ( 1/acum * i), 1, 0.9);
+    decimalColor = color.getHex().toString(16);
+    hexColor = ('000000' + color.getHex().toString( 16 )).slice(-6)
+    hex_perchain_colors[chain_data["chain_models"][i]] = hexColor
+}
+
+var it = 0
+for (var p in partners)
+{
+    chains = partners[p]
+    for (var c in chains)
+    {
+        c_m = chains[c];
+        var color = new TCo(0);
+        color.setHSV( colors[it], 1, 0.9);
+        decimalColor = color.getHex().toString(16);
+        hexColor = ('000000' + color.getHex().toString( 16 )).slice(-6)
+        hex_perpartner_colors[c_m] = hexColor
+    }
+    it++;
+}
+        
+
+var color_per_chain = true
+
+
+{% if pdbid %}
+
+var pdbid = "{{pdbid|safe}}";
+var chains_desc = {};
+for (var i in chain_data["chains"])
+{
+    chainname = chain_data["chains"][i]
+    $.get("http://www.rcsb.org/pdb/rest/describeMol", {
+            structureId: pdbid+"."+chainname,
+        })
+        .always(function (xml){
+            var chain = $(xml).find('structureId').attr("chainId");
+            var desc = $(xml).find('polymerDescription').attr("description");
+            console.log(chain)
+            chains_desc[chain] = desc;
+            var msg = chains_desc[chain]
+
+            $(".chain-"+chain).addClass("has-tip radius")
+            if (chain_data["symmetry_chains"])
+            {
+                if (chain_data["symmetry_chains"][chain]) msg += " - Identical chain to " + chain_data["symmetry_chains"][chain];
+            }
+            var tooltip_content = msg
+            $(".chain-"+chain).html(": "+msg)
+            $(".chain-"+chain).attr("title", tooltip_content)
+            $(".chain-"+chain).attr("data-tooltip", '')
+            $(".chain-"+chain).attr("aria-haspopup", "true")
+            $(".chain-"+chain).css("font-weight", "normal")
+            $(document).foundation('tooltip', 'reflow');
+
+
+
+
+
+
+            /*$(".chain-"+chain).html(chains_desc[chain])
+            // $(".chain-"+chain).html(': '+chains_desc[chain].substr(0,24)+'...')
+            $(".chain-"+chain).addClass("has-tip radius")
+            $(".chain-"+chain).attr("title", chains_desc[chain])
+            $(".chain-"+chain).attr("data-tooltip", '')
+            $(".chain-"+chain).attr("aria-haspopup", "true")
+            $(".chain-"+chain).css("font-weight", "normal")
+            $(document).foundation('tooltip', 'reflow');*/
+        });
+}
+
+
+{% endif %}
+
+// ================ GLmol =============================
+
+// some "global" variables
+
+var draw_flag = false;
+var all_res_to_zoom = [];
+
+{% if pdbid %}
+    var pdb = new GLmol('pdb_container');
+
+    $.get("http://www.rcsb.org/pdb/files/{{pdbid}}.pdb", function(ret) {
+      $("#pdb_container_src").val(ret);
+        pdb.loadMolecule(true);
+    });
+
+    // some "global" variables
+    var res = undefined;
+    var res_applied_mat = undefined;
+    
+
+    pdb.defineRepresentation = function() {
+
+        // var colors = [0.33, 0.66] 
+        var p_it = 0;
+        var actual_it = 1;
+
+        var asu = new THREE.Object3D();
+
+        if (unit == "bio") this.protein.appliedMatrix = new THREE.Matrix4();
+
+        all_res_to_zoom = []
+        console.log(unit)
+        for (var p in partners)
+        {
+            chains = partners[p]
+
+            if (unit == "asu")
+            {   
+                for (var c in chains)
+                {
+                    c_m = chains[c];
+                    c_m_array = c_m.split("_");
+                    chainid = c_m_array[0];
+                    modelid = c_m_array[1];
+
+                    var all = this.getChain(this.getAllAtoms(), chainid );
+
+                    if (color_per_chain) {
+                        this.colorByChain(all, [perchain_colors[c_m]]); }
+                    else {
+                        this.colorByChain(all, [colors[p_it]]); }
+
+                    var asu = new THREE.Object3D();
+
+                    // ================== Draw selected residue ===================
+                    if (pdb_selected_chain == c_m)
+                    {
+                        var s_chain = pdb_selected_chain.split("_")
+                        if (pdb_selected_residue != "" && pdb_selected_residue != undefined)
+                        {
+                            var res_arr = pdb_selected_residue.split("_");
+                            res = this.getResidueByIdAndChain(this.getAllAtoms(), res_arr[1], s_chain[0]);
+                            // console.log(s_chain[0]+"::"+res_arr[1])
+                            console.log(res)
+                            this.colorByAtom(res, {});
+                            this.drawBondsAsStick(asu, res, this.cylinderRadius, this.cylinderRadius);
+                        }
+                    }
+
+                    // ===========================================================
+
+                    all_res_to_zoom = all_res_to_zoom.concat(all)
+                    this.drawCartoon(asu, all, this.curveWidth, this.thickness);
+                    this.modelGroup.add(asu);
+                }
+            }
+            
+            if (unit == "bio")
+            {   
+                for (var c in chains)
+                {
+                    c_m = chains[c];
+                    c_m_array = c_m.split("_");
+                    chainid = c_m_array[0];
+                    modelid = c_m_array[1];
+
+                    var all = this.getChain(this.getAllAtoms(), chainid );
+                    if (color_per_chain) {
+                        this.colorByChain(all, [perchain_colors[c_m]]); }
+                    else {
+                        this.colorByChain(all, [colors[p_it]]); }
+
+                    var i = parseInt(modelid);
+                    var mat = this.protein.biomtMatrices[i];
+                    if ( mat == undefined && this.protein.biomtMatrices.length > 0) // this is for cases where the biounit is smaller than the asu
+                    {
+                      console.log("error undefined modelid "+modelid);
+                      continue  
+                    } 
+                    var asu = new THREE.Object3D();
+                    
+                    
+                    // ================== Draw selected residue ===================
+                    if (pdb_selected_chain == c_m)
+                    {
+                        var s_chain = pdb_selected_chain.split("_")
+                        if (pdb_selected_residue != "" && pdb_selected_residue != undefined)
+                        {
+                            var res_arr = pdb_selected_residue.split("_");
+                            res = this.getResidueByIdAndChain(this.getAllAtoms(), res_arr[1], s_chain[0]);
+                            // console.log(s_chain[0]+"::"+res_arr[1])
+                            console.log(res)
+                            this.colorByAtom(res, {});
+
+                            this.drawBondsAsStick(asu, res, this.cylinderRadius, this.cylinderRadius);
+                            if (this.protein.biomtMatrices.length > 0) res_applied_mat = mat
+                        }
+                    }
+
+                    // ===========================================================
+
+                    if (this.protein.biomtMatrices.length > 0)
+                    {
+                        asu.matrixAutoUpdate = false
+                        asu.matrix = mat
+                    }
+
+                    //this.colorByChain(all, [colors[p_it]])
+                    all_res_to_zoom = all_res_to_zoom.concat(all)
+                    this.drawCartoon(asu, all, this.curveWidth, this.thickness);
+                    this.modelGroup.add(asu);
+                    if (this.protein.biomtMatrices.length > 0)
+                    {
+                        for (var j = 0; j < 16; j++) this.protein.appliedMatrix.elements[j] += mat.elements[j];    
+                    }
+                    actual_it++;
+                }
+            }
+            p_it += 1
+            console.log(all_res_to_zoom.length)
+        }  // end of partners
+
+        if (unit == "bio") 
+        {
+            this.protein.appliedMatrix.multiplyScalar(actual_it);
+            console.log(draw_flag)
+            if (draw_flag && res_applied_mat != undefined) // res != undefined
+            {
+                for (var j = 0; j < 16; j++) this.protein.appliedMatrix.elements[j] = res_applied_mat.elements[j];
+                this.protein.appliedMatrix.multiplyScalar(1);
+                console.log("in here!")
+            }
+        }
+
+    pdb.zoomInto(all_res_to_zoom);
+    
+    }; // end of defineRepresentation
+
+    // pdb.rebuildScene();
+    // pdb.show();
+
+{% endif %}
+
+
+
+ //=====================================================
+
+$(document).ready(function(){
+
+
+ $("#info_status").on('click', function(){
+    if ($("#info_status").html() == "Hide")
+    {
+        $("#info_data").css("display", "none")
+        $("#info_status").html("Show")    
+    }
+    else
+    {
+        if ($("#info_status").html() == "Show")
+        {
+            $("#info_data").css("display", "block")
+            $("#info_status").html("Hide")    
+        }
+    } 
+})
+
+
+
+{% if pdb_filename %}
+    
+    // var colors = [0.33, 0.66] 
+
+    var pdb = new GLmol('pdb_container');
+    var res = undefined;
+
+    pdb.defineRepresentation = function() {
+
+        res = undefined;
+        console.log("user pdb")
+        var p_it = 0
+        for (var p in partners)
+        {
+            chains = partners[p]
+            chain_arr = [];
+            color_arr = [];
+            for (var c in chains)
+            {
+                c_m = chains[c];
+                c_m_array = c_m.split("_");
+                chainid = c_m_array[0];
+                modelid = c_m_array[1];
+                chain_arr.push(chainid)
+                if (color_per_chain){
+                    color_arr.push(perchain_colors[c_m])}
+                else {
+                    color_arr.push(colors[p_it])}
+            }
+                
+            var all = this.getChain(this.getAllAtoms(),chain_arr);
+            this.colorByChain(all, color_arr);
+            console.log(color_arr)
+
+            var asu = new THREE.Object3D();
+
+// ================== Draw selected residue ===================
+            if (pdb_selected_chain != undefined && pdb_selected_chain != "")
+            {
+                var s_chain = pdb_selected_chain.split("_")
+                if ($.inArray(s_chain[0], chain_arr) > -1)
+                {
+                    if (pdb_selected_residue != "" && pdb_selected_residue != undefined)
+                    {
+                        var res_arr = pdb_selected_residue.split("_");
+                        res = this.getResidueByIdAndChain(this.getAllAtoms(), res_arr[1], s_chain[0]);
+                        console.log(res)
+                        this.colorByAtom(res, {});
+                        // var resasu = new THREE.Object3D();
+                        // this.drawBondsAsStick(resasu, res, this.cylinderRadius, this.cylinderRadius);
+                        // this.modelGroup.add(resasu);
+
+                        this.drawBondsAsStick(asu, res, this.cylinderRadius, this.cylinderRadius);
+                        // this.modelGroup.add(asu);
+                    }
+                }
+            }
+// ===========================================================
+            all_res_to_zoom = all_res_to_zoom.concat(all)
+            this.drawCartoon(asu, all, this.curveWidth, this.thickness);
+            this.modelGroup.add(asu);
+            p_it++;
+        }
+        console.log(all_res_to_zoom.length)
+
+        pdb.zoomInto(all_res_to_zoom);
+    };
+
+    pdb.rebuildScene();
+    // pdb.zoomInto(pdb.getAllAtoms());
+    pdb.show();
+
+{% endif %}
+
+
+$("#reset_zoom").on('click', function(){
+    draw_flag = false
+    pdb.zoomInto(all_res_to_zoom);
+    pdb.show()
+    return false;
+});
+
+$("#color_by_partner").on('click', function(){
+    draw_flag = false
+    color_per_chain = false
+    res = undefined
+    pdb.rebuildScene();
+    pdb.show()
+    ColorChainOptions(color_per_chain);
+    return false;
+});
+
+$("#color_by_chain").on('click', function(){
+    draw_flag = false
+    color_per_chain = true
+    res = undefined
+    pdb.rebuildScene();
+    pdb.show()
+    ColorChainOptions(color_per_chain);
+    return false;
+});
+
+
+
+function addMutation() {
+
+    var last_mut_num = $("#mutations_list").children().length;
+    if (last_mut_num < 16)
+    {
+        var new_num = last_mut_num + 1;
+
+        $("#num_muts").val(new_num);
+
+        var element = '<div class="row" id="'+new_num+'">';
+        element += '<div class="small-3 columns">';
+        element += '<select class="chain_select" name="chain_select'+new_num+'">';
+        element += '<option value="-999">Select Chain</option>';
+/*        for (var chain in chains_residues){
+
+            var myRegexp = /_(\d+)$/;
+            var match = myRegexp.exec(chain)
+            var model_num = parseInt(match[1])
+            var chain2 = chain.replace(/_\d+$/, "")
+            var chain_model = "";
+            if (model_num-1 > 0)
+            {
+                chain_model = "_"+(model_num-1)
+            }
+            element += '<option value="'+chain+'">Chain '+chain2+chain_model+'</option>';
+        }*/
+
+        for (var i in chain_data["chain_models"]){
+
+            var chain = chain_data["chain_models"][i]
+            console.log(chain)
+            if (chain in chains_residues)
+            {
+               var myRegexp = /_(\d+)$/;
+                var match = myRegexp.exec(chain)
+                var model_num = parseInt(match[1])
+                var chain2 = chain.replace(/_\d+$/, "")
+                var chain_model = "";
+                if (model_num-1 > 0)
+                {
+                    chain_model = "_"+(model_num-1)
+                }
+                element += '<option value="'+chain+'">Chain '+chain2+chain_model+'</option>'; 
+            }
+        }
+
+        element += '</select></div><div class="small-3 columns" >';
+        element += '<select name="res_select'+new_num+'"><option value="-999"> Select a Residue </option></select>';
+        element += '</div><div class="small-3 columns">';
+        element += '<select name="mut_select'+new_num+'"><option value="-999"> Mutate for.. </option></select></div>';
+
+        element += '<div class="small-3 columns text-center">';
+        element += '<button class="draw_mut button tiny radius">View</button></div></div>';
+
+        $("#mutations_list").append(element);
+        updateBinders();
+        ColorChainOptions(color_per_chain);
+    }
+    else
+    {
+        alert("Maximum number of mutations is 16");
+    }
+
+}
+
+function deleteMutation() {
+
+    var last_mut_num = $("#mutations_list").children().length;
+    if (last_mut_num > 1)
+    {
+        $("#mutations_list").children().last().remove();
+        updateBinders();
+        var new_num = last_mut_num - 1;
+        $("#num_muts").val(new_num);
+    }
+    else
+    {
+        alert("Minimum number of mutations is 1");
+    }
+
+}
+
+function ColorChainOptions(option) {
+
+    var chain_options = $(".chain_select").children();
+    if (option)
+    {
+        for (var i = 0; i< chain_options.length;i++)
+        {
+            var e = chain_options[i];
+            var c_m = e.value;
+            $(e).css("background-color", "#"+hex_perchain_colors[c_m]);
+            $(".chain-"+c_m).css("background-color", "#"+hex_perchain_colors[c_m]);
+        }  
+    }
+    else
+    {
+        for (var i = 0; i< chain_options.length;i++)
+        {
+            var e = chain_options[i];
+            var c_m = e.value;
+            $(e).css("background-color", "#"+hex_perpartner_colors[c_m]);
+            $(".chain-"+c_m).css("background-color", "#"+hex_perpartner_colors[c_m]);
+        } 
+    }    
+    
+}
+
+function updateBinders (){
+
+        $(".draw_mut").unbind();
+        $(".draw_mut").on('click', function(){
+            var row_e = $(this).parent().parent()
+            var id = row_e[0].id
+            chainid = $(row_e[0]).find(".chain_select").val()
+            residueid = $(row_e[0]).find("[name=res_select"+id+"]").val()
+            
+            if (chainid != -999)
+            {
+                pdb_selected_chain = chainid
+                pdb_selected_residue = residueid
+
+                draw_flag = true
+                all_res_to_zoom = []
+                pdb.rebuildScene();
+                if (res != undefined)
+                {
+                    //pdb.rebuildScene();
+                    pdb.zoomInto(res, true)
+                } 
+                else 
+                {
+                    draw_flag = false
+                    //pdb.rebuildScene();
+                    // pdb.zoomInto(pdb.getAllAtoms());
+                    pdb.zoomInto(all_res_to_zoom);
+                }
+                pdb.show();
+            }
+            return false;
+        });
+
+
+
+
+
+        $(".chain_select").unbind();
+        $(".chain_select").on('change', function(){
+            var selected_chain = $(this).val();
+            if (selected_chain != "-999")
+            {
+                var row_number = $(this).parent().parent().attr('id');
+                var select_element = $('[name=res_select'+row_number+']');
+                $(select_element).empty();
+                var indexes = Object.keys(chains_residues[selected_chain]);
+
+                var numbers = [];
+
+                /*for (var i in chains_residues[selected_chain]){
+                    numbers.push(chains_residues[selected_chain][i].resid);
+                }*/
+
+                // Fix for showing residues and altresidues in order (60, 60A, 60B ...)
+                for (var i in chain_data[selected_chain]){
+                    numbers.push(chain_data[selected_chain][i].replace(/ /g,''));
+                }
+
+                for (var res in numbers)  // .sort(function(a, b){return a-b})
+                {
+                    var resid = chains_residues[selected_chain][numbers[res]].resid;
+                    resid.replace(/\s+/g, "");
+                    var resname = chains_residues[selected_chain][numbers[res]].resname;
+                    // Do not show residues that are not in the dictionary
+                    if (dictionary[resname] != undefined)
+                    {
+                        // var html = '<option value="'+dictionary[resname]+'_'+resid+'">'+dictionary[resname]+' '+resid+' ('+resname+')</option>';
+                        var html = '<option value="'+dictionary[resname]+'_'+resid+'">'+resid+' ('+resname+')</option>';
+                        $(select_element).append(html);
+                    }                    
+                }
+
+                var select_element = $('[name=mut_select'+row_number+']');
+                for (e in dictionary)
+                {
+                    var html = '<option value="'+dictionary[e]+'">'+e+'</option>';
+                    $(select_element).append(html);
+                }
+            }
+            else
+            {
+                var row_number = $(this).parent().parent().attr('id');
+                var select_element = $('[name=res_select'+row_number+']');
+                var html = '<option value="-999"> Select a Residue </option>';
+                $(select_element).html(html)
+
+                var select_element = $('[name=mut_select'+row_number+']');
+                var html = '<option value="-999"> Mutate for.. </option>';
+                $(select_element).html(html);
+            }
+        });
+}
+
+updateBinders();
+ColorChainOptions(true);
+$("#addM").on('click', function(){
+    addMutation();
+});
+$("#delM").on('click', function(){
+    deleteMutation();
+});
+
+
+
+
+});  // fin document ready
+
+</script>
+
+{% endblock %}

@@ -1,0 +1,462 @@
+{% extends "sunddg/base.html" %}
+
+{% load staticfiles%}
+
+{% block custom_js %}
+<script type="text/javascript" src="{% static 'myjs/glmol/js/Three49custom.js' %}" ></script>
+<script type="text/javascript" src="{% static 'myjs/glmol/js/GLmol.js' %}" ></script>
+
+<script src="{% static 'myjs/jquery-ui.js' %}"></script>
+<script src="{% static 'myjs/draganddrop.js' %}"></script>
+<link rel="stylesheet" type="text/css" href="{% static 'mycss/jquery-ui.css' %}" />
+<style>
+  .partners { min-height: 7rem; /*border-style: dashed; border-color:#f2f2f2;*/ border-radius:2px ;border-width:2px}
+  .partners h5 {font-size : 0.8em}
+  #gallery { float: left; min-height: 12em; border-style: dashed; border-color:#ffffff; border-radius:2px ; border-width:2px }
+  #gallery.custom-state-active { border-style: dashed; border-color:#888888; border-radius:3px ;border-width:2px}
+  .custom-state-active { border-style: dashed; border-color:#999999; border-radius:3px ; border-width:2px}
+  .ui-state-highlight { border-style: dashed; border-color:#999999; border-radius:3px ; border-width:2px}
+  .gallery {width:100%}
+  .gallery li { float: left; width: 66px; padding: 0.4em; margin: 0 0.4em 0.4em 0; text-align: center; }
+  .gallery li h5 { margin: 0 0 0.1em; cursor: move; background:#888888 }
+  .gallery li a { float: left; }
+  .gallery li a.ui-icon-triangle-1-se { float: right; }
+  .gallery li img { width: 100%; cursor: move; }
+  .panel {margin-bottom: 0.25rem;padding:0.75rem;}
+
+.small {
+  font-size: 20px;
+  padding: 0 5px;
+}
+  </style>
+{% endblock %}
+
+{% block main_content %}
+
+
+<div class="messages row">
+{% if error_message %}<div data-alert class="small-12 columns alert-box alert">{{ error_message }}</div>{% endif %}
+</div>
+
+{% if messages %}
+{% for message in messages %}
+<div class="messages row">
+    {% if message.tags  == "error" %}
+    <div data-alert class="small-12 columns alert-box alert">{{ message }}</div>
+    {% endif %}
+</div>
+{% endfor %}
+</ul>
+{% endif %}
+
+
+
+{% load replace_decrease %}
+{% load get_at_index %}
+
+<!-- <ul class="breadcrumbs">
+  <li><a href="{% url 'sunddg:index' %}">Step 1</a></li>
+  <li class="current">Step 2</li>
+</ul>
+<h4 style="margin-bottom:0;margin-top:1rem">  Select Interaction Partners </h4>
+<hr style="margin-top:0;margin-bottom:0.5rem"> -->
+<h2> Step 2 - Select Partners of Interaction </h2>
+
+
+
+<div class="row"> 
+    <div class="small-6 columns">
+        <ul class="accordion" data-accordion>
+            <li class="accordion-navigation">
+            <a href="#panel1"> <i class="fi-list large"></i> &nbsp; Your data {# : {% if pdbid %} {{pdbid|upper}}{% else %} {{pdb_filename}}{% endif %} #} <i id="acc_status" class="fi-x large right"></i></a>
+                <div id="panel1" class="content active">
+                    <div class="row">
+                        <div class="small-12 columns panel radius">
+                        <p class="overflowtext">
+                            {% if pdbid %}
+                                <b>PDB id</b>: <a target="_blank" href="http://www.rcsb.org/pdb/explore/explore.do?structureId={{pdbid}}">{{pdbid|upper}}</a>
+                                <!-- Check Interactions at MMDB<a target="_blank" href="http://www.ncbi.nlm.nih.gov/Structure/mmdb/mmdbsrv.cgi?uid={{pdbid|safe}}"><i class="fi-page-export small"></i></a> --><br>
+                            {% else %}        
+                                <b>PDB file</b>: {{pdb_filename}}<br>
+                            {% endif %}
+                                {% for chain  in content.chains %}
+                                Chain {{chain}}<span id="chain-{{chain}}"  title=""></span><br>  {# {{content|get_at_index:chain|length}} residues.  #}
+
+                                {% endfor %}
+
+                            {% if job_object.firstmodelwarning > 0 %}
+                                <br>
+                                **Warning** <br>
+                                The uploaded PDB contained more than one MODEL. First model has been used as default</p>
+                            {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </li>
+        </ul>
+    </div>
+    <div class="small-6 columns">
+        <div class="row">
+            <div class="small-12 columns">
+                <div id="pdb_container" style="width: 100%; height: 340px; background-color: black;"></div> <textarea id="pdb_container_src" style="display: none;">
+                {% if pdbid %}
+
+                {% else %}
+                    {{pdbfile}}
+                {% endif %}
+                </textarea>
+            </div>    
+        </div>
+        <div class="row">
+            <div class="small-12 columns">
+<!--                     <input type="radio" name="pdb_container_mouseMode" value="0" checked>Rotate<br>
+                <input type="radio" name="pdb_container_mouseMode" value="1">Translate<br>
+                <input type="radio" name="pdb_container_mouseMode" value="2">Zoom<br>
+                <input type="radio" name="pdb_container_mouseMode" value="3">Slab<br><br> -->
+                <button style="margin-top:0.5rem" class="button radius tiny right" id="reset_zoom">Reset Zoom</button>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<div class="row">
+    <form action="{% url 'sunddg:save_partners' job_object.job %}" method="post">
+        <div class="small-12 columns">
+            {% csrf_token %}
+            <div class="row">
+                <div id="partner1" class="partners small-6 columns panel radius">
+                    <!-- <div  class="partners"> -->
+                        <h4>Partner 1</h4>
+                    <!-- </div> -->
+                </div>
+                <div id="partner2" class=" partners small-6 columns panel radius">
+                    <!-- <div  class=""> -->
+                        <h4>Partner 2</h4>
+                    <!-- </div> -->
+                </div>
+            </div>
+        </div>
+</div>
+
+<div class="row">
+    <div class="small-9 columns">
+    <br><p style="margin-bottom:0.5rem"><b>Drag and drop</b> chains to select interaction partners.<span data-tooltip data-options="width:300" aria-haspopup="true" class="has-tip tip-top radius" title="<p>For Bioassemblies, if any protein or nucleotide molecules in the structure were generated by applying transformations from crystallographic symmetry, they are depicted with labels that have alphanumeric combinations (for example, 'A_1') indicating the source molecule from which they were generated and the copy number.</p><img src='{% static 'mycss/chain_help_labels.png' %}' />"><i class="fi-info small"></i></span> </p>
+        <div class="row">
+            <div class="small-12 columns">
+                <!-- <ul id="gallery" class="gallery small-block-grid-4 medium-block-grid-6 large-block-grid-8"> -->
+                <ul id="gallery" class="gallery small-block-grid-8">
+                    {% for chain  in content.chain_models %}
+
+                    <li class="ui-widget-content ui-corner-all ">
+                        <h5 class="ui-corner-all chain-{{ chain }}">
+                                
+                                {{ chain|replace_decrease }}
+                        </h5>
+                        <!--<img src="images/high_tatras_min.jpg" alt="The peaks of High Tatras" width="96" height="72">-->
+                        <a title="Add as Partner 1" class="ui-icon ui-icon-triangle-1-sw">P1</a>
+                        <a title="Add as Partner 2" class="ui-icon ui-icon-triangle-1-se">P2</a>
+                        <input type="hidden" name="chains.{{ forloop.counter }}" value="{{ chain }}.no"/>
+                    </li>
+
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="small-3 columns">
+        <button type="submit" class="button radius right" style="margin-top:0.5rem" id="submit_partners">Next</button>
+    </div>
+</form>
+</div>
+
+
+<script>
+
+$.fn.overflown=function(){var e=this[0];return e.scrollHeight>e.clientHeight||e.scrollWidth>e.clientWidth;}
+
+var unit = "{{unit}}";
+var chain_data = {{content|safe}};
+
+
+// cuenta cuantos modelos de cada cadena hay (al pedo?)
+var chains_obj = {};
+for (var i in chain_data["chain_models"])
+{
+    chain = chain_data["chain_models"][i]
+    chain2 = chain.replace(/_\d+/, "")
+    if (chain2 in chains_obj)
+    {
+        chains_obj[chain2] = chains_obj[chain2] + 1;
+    }
+    else
+    {
+        chains_obj[chain2] = 1;    
+    }
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+{% if pdbid %}
+
+var pdbid = "{{pdbid|safe}}";
+var chains_desc = {};
+for (var i in chain_data["chains"])
+{
+    chainname = chain_data["chains"][i]
+    $.get("http://www.rcsb.org/pdb/rest/describeMol", {
+            structureId: pdbid+"."+chainname,
+        })
+        .always(function (xml){
+            var chain = $(xml).find('structureId').attr("chainId");
+            var desc = $(xml).find('polymerDescription').attr("description");
+            chains_desc[chain] = desc;
+
+            var msg = chains_desc[chain]
+
+            $("#chain-"+chain).addClass("has-tip radius")
+            if (chain_data["symmetry_chains"])
+            {
+                if (chain_data["symmetry_chains"][chain]) msg += " - Identical chain to " + chain_data["symmetry_chains"][chain];
+            }
+            var tooltip_content = msg
+            $("#chain-"+chain).html(": "+msg)
+            $("#chain-"+chain).attr("title", tooltip_content)
+            $("#chain-"+chain).attr("data-tooltip", '')
+            $("#chain-"+chain).attr("aria-haspopup", "true")
+            $("#chain-"+chain).css("font-weight", "normal")
+            $(document).foundation('tooltip', 'reflow');
+            
+        });
+}
+
+{% endif %}
+
+
+{% if pdbid %}
+    var pdb = new GLmol('pdb_container');
+
+    var colors = [];
+
+    var acum = chain_data["chain_models"].length
+    var chain_num = chain_data["chains"].length;
+
+    for (var i = 0; i<acum; i++)
+    {
+        // colors.push(Math.random())
+        colors.push( 1/acum * i)
+    }
+
+    $.get("http://www.rcsb.org/pdb/files/{{pdbid}}.pdb", function(ret) {
+      $("#pdb_container_src").val(ret);
+        pdb.loadMolecule();
+    });
+
+    pdb.defineRepresentation = function() {
+        var drawn_chains = 0;
+        var all = this.getChain(this.getAllAtoms(),chain_data["chains"]);
+        // var hetatm = this.removeSolvents(this.getHetatms(all));
+        // this.colorByAtom(all, {});
+        this.colorByChain(all, colors.slice(0,acum));
+
+        var asu = new THREE.Object3D();
+        // this.drawBondsAsStick(asu, hetatm, this.cylinderRadius, this.cylinderRadius);
+        
+        if (unit == "bio")
+        {   
+            var actual_it = 1;
+            var all_it = 0;
+            this.protein.appliedMatrix = new THREE.Matrix4();
+            for (var i = 0; i < this.protein.biomtMatrices.length ; i++)
+            {
+                mat = this.protein.biomtMatrices[i]
+                if ( mat == undefined ) continue;
+                if ( mat.isIdentity()) {
+                    console.log("identity mat")
+                    chain_arr = this.protein.biomtChains[all_it].split(",")
+                    chains2select = []
+                    for (var j in chain_arr)
+                    {
+                        // corroboro que esta chains esté entre las que tenga q mostrar... por las dudas..
+                        if ($.inArray(chain_arr[j], chain_data["chains"]) > -1) { chains2select.push(chain_arr[j])}
+                    }
+
+                    tempcolors = colors.slice(drawn_chains, (drawn_chains+chains2select.length))
+                    var all = this.getChain(this.getAllAtoms(),chains2select);
+
+                    this.colorByChain(all, tempcolors );
+
+                    this.drawCartoon(asu, all, this.curveWidth, this.thickness);
+                    this.modelGroup.add(asu);
+                    drawn_chains += chains2select.length;
+                }
+                else {
+                    var asu = new THREE.Object3D();
+                    console.log(mat)
+                    console.log("here")
+                    asu.matrixAutoUpdate = false
+                    asu.matrix = this.protein.biomtMatrices[i];
+                    
+                    // select only chains to which this matrix should be applied
+                    chain_arr = this.protein.biomtChains[all_it].split(",")
+                    chains2select = []
+                    for (var j in chain_arr)
+                    {
+                        // corroboro que esta chains esté entre las que tenga q mostrar... por las dudas..
+                        if ($.inArray(chain_arr[j], chain_data["chains"]) > -1) { chains2select.push(chain_arr[j])}
+                    }
+                    tempcolors = colors.slice((drawn_chains), (drawn_chains+chains2select.length))
+                    var all = this.getChain(this.getAllAtoms(),chains2select);
+
+                    this.colorByChain(all, tempcolors );
+
+                    this.drawCartoon(asu, all, this.curveWidth, this.thickness);
+                    this.modelGroup.add(asu);
+                    drawn_chains += chains2select.length;
+                    for (var j = 0; j < 16; j++) this.protein.appliedMatrix.elements[j] += mat.elements[j];
+                    actual_it++;
+                }
+                all_it++;
+            }
+            this.protein.appliedMatrix.multiplyScalar(actual_it);
+        }
+        else
+        {
+            this.drawCartoon(asu, all, this.curveWidth, this.thickness);
+            this.modelGroup.add(asu);
+        }
+        
+        /*this.modelGroup.add(asu);*/
+
+
+    };
+
+   // for testing!!
+   pdb.rebuildScene();
+   pdb.show();
+
+   // Pinta las chains segund el GLmol
+
+
+    for (var i=0; i<chain_data["chain_models"].length; i++)
+    {
+        chainname = chain_data["chain_models"][i]
+        var color = new TCo(0);
+        color.setHSV( colors[i], 1, 0.9);
+        decimalColor = color.getHex().toString(16);
+        hexColor = ('000000' + color.getHex().toString( 16 )).slice(-6)
+        $(".chain-"+chainname).css("background", "#"+hexColor)
+    }
+
+var actual_it = 1;
+for (var i = 0; i < pdb.protein.biomtMatrices.length ; i++)
+{   
+    mat = pdb.protein.biomtMatrices[i]
+    if ( mat == undefined || mat.isIdentity()) continue;
+    temp = colors.slice((chain_num*actual_it), (chain_num*(actual_it)+chain_num))
+    actual_it++
+}
+
+{% endif %}
+
+
+///////////////////////////////////////////////////////////////////////////////
+
+$(document).ready(function(){
+
+
+
+
+{% if pdb_filename %}
+    
+    var colors = [];
+
+    var acum = chain_data["chain_models"].length
+    console.log(acum)
+    var chain_num = chain_data["chains"].length;
+
+    for (var i = 0; i<acum; i++)
+    {
+        console.log(1/acum * i)
+        colors.push( 1/acum * i)
+    }
+
+    var pdb = new GLmol('pdb_container');
+
+    pdb.defineRepresentation = function() {
+        var all = this.getChain(this.getAllAtoms(),chain_data["chains"]);
+        this.colorByChain(all, colors.slice(0,acum));
+
+        var asu = new THREE.Object3D();
+        // this.drawBondsAsStick(asu, hetatm, this.cylinderRadius, this.cylinderRadius);
+        this.drawCartoon(asu, all, this.curveWidth, this.thickness);
+        this.modelGroup.add(asu);
+    };
+
+    // for testing!!
+    pdb.rebuildScene();
+    pdb.zoomInto(pdb.getAllAtoms());
+    pdb.show();
+
+
+    for (var i=0; i<chain_data["chain_models"].length; i++)
+    {
+        chainname = chain_data["chain_models"][i]
+        var color = new TCo(0);
+        color.setHSV( colors[i], 1, 0.9);
+        decimalColor = color.getHex().toString(16);
+        hexColor = ('000000' + color.getHex().toString( 16 )).slice(-6)
+        $(".chain-"+chainname).css("background", "#"+hexColor)
+    }
+
+{% endif %}
+
+
+
+
+
+$("#reset_zoom").on('click', function(){
+    pdb.doFunc(function(mol) {mol.zoomInto(mol.getAllAtoms());mol.show()});
+    return false;
+});
+
+
+$(document).foundation({
+  accordion: {
+    // specify the class used for accordion panels
+    content_class: 'content',
+    // specify the class used for active (or open) accordion panels
+    active_class: 'active',
+    // allow multiple accordion panels to be active at the same time
+    multi_expand: true,
+    // allow accordion panels to be closed by clicking on their headers
+    // setting to false only closes accordion panels when another is opened
+    toggleable: true,
+    callback: function (accordion) {
+        if ($(accordion).hasClass("active"))
+        {
+            $("#acc_status").removeClass()
+            $("#acc_status").addClass("fi-x large right")
+        }
+        else
+        {
+            $("#acc_status").removeClass()
+            $("#acc_status").addClass("fi-plus large right")
+        }
+    }
+  }
+});
+
+
+
+
+});   // fin ready document
+
+
+
+
+</script>
+
+{% endblock %}
+

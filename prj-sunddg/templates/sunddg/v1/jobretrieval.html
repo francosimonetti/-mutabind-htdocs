@@ -1,0 +1,70 @@
+{% extends "sunddg/base.html" %}
+
+{% load staticfiles%}
+
+{% block main_content %}
+
+<div class="row">
+	<div class="small-12 columns">
+		<p>Please, input your Job Id number below to retrieve your job</p>
+
+		<form action="{% url 'sunddg:retrieve_job' %}" method="post" id="job_form" enctype="multipart/form-data">
+			{% csrf_token %}
+			<div class="row">
+				<div class="small-8 columns">
+					<div class="row">
+						<div class="small-3 columns">
+							<label for="job_id" class="right inline">Retrieve Job</label>
+						</div>
+						<div class="small-9 columns">
+							<input type="text" id="job_id" name="job_id" placeholder="Job Id Number" class="radius">
+						</div>
+					</div>
+				</div>
+			</div>
+			<button type="submit" class="radius" id="submit_jobid">Submit</button>
+		</form>
+	</div>
+</div>
+
+<div class="row">
+	<div id="recent_jobs" class="small-12 columns">
+
+	</div>
+</div>
+
+<script>
+
+objstr = localStorage.getItem("recent_jobs")
+if (objstr == "")
+{ objstr = null}
+old_jobs = objstr
+if (old_jobs != null)
+{
+    o_jobs = old_jobs.split(",")    
+}
+else
+{
+    o_jobs = []
+}
+
+if (o_jobs.length > 0)
+{
+	$("#recent_jobs").append('<hr><h4> Recent Jobs</h4>')
+
+
+for (var i in o_jobs)
+{
+	job = o_jobs[i]
+	if (job != "")
+	{ 
+		$("#recent_jobs").append('<div class="alert-box secondary radius"> Job id:<a href="'+job+'">'+job+'</a></div>')
+		console.log(job)
+	}
+}
+
+}
+
+</script>
+
+{% endblock %}
