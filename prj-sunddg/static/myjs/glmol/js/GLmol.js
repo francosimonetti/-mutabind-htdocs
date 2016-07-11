@@ -214,7 +214,7 @@ GLmol.prototype.parseXYZ = function(str) {
    return true;
 };
 
-GLmol.prototype.parsePDB2 = function(str) {
+GLmol.prototype.parsePDB2 = function(str, biomt_num) {      //added biomt_num by franco
    var atoms = this.atoms;
    var protein = this.protein;
    var molID;
@@ -291,9 +291,22 @@ GLmol.prototype.parsePDB2 = function(str) {
             protein.symMat[m].elements[n + 4] = parseFloat(line.substr(34, 9));
             protein.symMat[m].elements[n + 8] = parseFloat(line.substr(44, 9));
             protein.symMat[m].elements[n + 12] = parseFloat(line.substr(54, 10));
-         } else if (type == 350 && line.substr(13, 5) == 'BIOMT' && protein.biomtMolecules < 2) {   // last condition added by franco  && (protein.biomtMolecules < 2 || typeof(protein.biomtMolecules) == "undefined")
+         } else if (type == 350 && line.substr(13, 5) == 'BIOMT' && protein.biomtMolecules <= biomt_num) {   // last condition added by franco  && (protein.biomtMolecules < 2 || typeof(protein.biomtMolecules) == "undefined")
+            //added biomt_num by franco (previous value = 2 (meant first bioassembly))
             var n = parseInt(line[18]) - 1;
+            //console.log(protein.biomtMolecules+" vs "+biomt_num)
             var m = parseInt(line.substr(21, 2));
+            if (typeof(protein.biomtM_prev) == "undefined") {
+               protein.biomtM_prev = m;
+               protein.biomtRead += 1;} // condition added by franco
+            console.log(m+ "anterior: "+protein.biomtM_prev)
+            if (protein.biomtM_prev != m) { 
+               protein.biomtM_prev = m;
+               protein.biomtRead += 1;}
+            //var l = Math.floor(protein.biomtRead) + 1;
+
+            //console.log(m+" Vs "+l )
+            m = protein.biomtRead
             currentbiomt = m;
             if (protein.biomtMatrices[m] == undefined) protein.biomtMatrices[m] = new THREE.Matrix4().identity();
             if (protein.biomtChains[currentbiomt] == undefined) protein.biomtChains[currentbiomt] = protein.biomtChains[currentbiomt-1]
@@ -301,14 +314,28 @@ GLmol.prototype.parsePDB2 = function(str) {
             protein.biomtMatrices[m].elements[n + 4] = parseFloat(line.substr(34, 9));
             protein.biomtMatrices[m].elements[n + 8] = parseFloat(line.substr(44, 9));
             protein.biomtMatrices[m].elements[n + 12] = parseFloat(line.substr(54, 10));
-         } else if (type == 350 && line.substr(11, 11) == 'BIOMOLECULE' ) {
+            // protein.biomtRead += 0.333334;      //added by franco, counts the number of matrices read (every three lines I get one :P)
+            if (n == 2 && protein.biomtMolecules == biomt_num){
+               //console.log(protein.biomtMolecules +" vs "+biomt_num)
+               protein.biomtChainsEnd = protein.biomtRead;
+            }
+         } else if (type == 350 && line.substr(11, 11) == 'BIOMOLECULE' ) { //&& ( (protein.biomtMolecules < (biomt_num)) || (typeof(protein.biomtMolecules) == "undefined"))) {
+             //console.log(protein.biomtMolecules+" vs "+biomt_num)
              if (typeof(protein.biomtMatrices) == "undefined") {protein.biomtMatrices = {};} // condition added by franco
+             if (typeof(protein.biomtRead) == "undefined") {protein.biomtRead = 0;} // condition added by franco
+             if (typeof(protein.biomtChainsEnd) == "undefined") {protein.biomtChainsEnd = 0;} // condition added by franco
+             if (typeof(protein.biomtChainsStart) == "undefined") {protein.biomtChainsStart = 0;} // condition added by franco
+             if (typeof(protein.biomtMolecules) == "undefined") {protein.biomtMolecules = 0;}
              // protein.biomtChains = {}; 
              // added by Franco
              // this it to select the first biomolecule. Otherwise, the last biomolecule was defaulted (last one to be loaded)
-             if (typeof(protein.biomtMolecules) == "undefined") {protein.biomtMolecules = 0;}
              protein.biomtMolecules += 1;
-         } else if (type == 350 && line.substr(34, 6) == 'CHAINS' && protein.biomtMolecules < 2) {   // last condition added by franco
+             protein.biomtM_prev = undefined
+             if (protein.biomtMolecules == biomt_num) {
+                  protein.biomtChainsStart = protein.biomtRead;     // saves from which biomtChain index to read (start of matrixes for those chains)
+            }
+         } else if (type == 350 && line.substr(34, 6) == 'CHAINS' && protein.biomtMolecules <= biomt_num) {   // last condition added by franco
+               //added biomt_num by franco (previous value = 2 (meant first bioassembly))
                if (line.substr(30, 10) == 'AND CHAINS') protein.biomtChains[currentbiomt] += line.substr(41, 40).replace(/ /g,'');
                else protein.biomtChains[currentbiomt] = line.substr(41, 40).replace(/ /g,'');
          }
@@ -939,6 +966,8 @@ GLmol.prototype.drawStrand = function(group, atomlist, num, div, fill, coilWidth
             colors.push(atom.color);
          } else { // O
             var O = new TV3(atom.x, atom.y, atom.z);
+            // added by Franco to fix problems with residues with no CA
+            if (currentCA == undefined) continue;
             O.subSelf(currentCA);
             O.normalize(); // can be omitted for performance
             O.multiplyScalar((ss == 'c') ? coilWidth : helixSheetWidth); 
@@ -1468,7 +1497,7 @@ GLmol.prototype.drawSymmetryMates2 = function(group, asu, matrices) {
    for (var i = 0; i < matrices.length; i++) {
       var mat = matrices[i];
       if (mat == undefined || mat.isIdentity()) continue;
-      console.log(mat);
+      //console.log(mat);
       var symmetryMate = THREE.SceneUtils.cloneObject(asu);
       symmetryMate.matrix = mat;
       group.add(symmetryMate);
@@ -1565,7 +1594,7 @@ GLmol.prototype.defineRepresentation = function() {
    var hetatm = this.removeSolvents(this.getHetatms(all));
 
    // added by franco
-   var colors = [0,0.1, 0.2 ,0.3, 0.4, 0.5, 0.6, 0.7 ,0.8, 0.9, 1] //set some colors, will be overwritten later
+   var colors = [0,0.1, 0.2 ,0.3, 0.4, 0.5, 0.6, 0.7 ,0.8, 0.9, 1] //set some colors, will be overwrited later
 
    this.colorByAtom(all, {});
    this.colorByChain(all, colors);
@@ -1648,17 +1677,19 @@ GLmol.prototype.rebuildScene = function() {
    console.log("builded scene in " + (+new Date() - time) + "ms");
 };
 
-GLmol.prototype.loadMolecule = function(repressZoom) {
-   this.loadMoleculeStr(repressZoom, $('#' + this.id + '_src').val());
+GLmol.prototype.loadMolecule = function(repressZoom, biomt_num) {       //las parameter "biomt_num" added by franco (to select that bioassembly pdb1, pdb2, etc)
+   this.loadMoleculeStr(repressZoom, $('#' + this.id + '_src').val(), biomt_num);
 };
 
-GLmol.prototype.loadMoleculeStr = function(repressZoom, source) {
+GLmol.prototype.loadMoleculeStr = function(repressZoom, source, biomt_num) {  //added biomt_num by franco
    var time = new Date();
 
    this.protein = {sheet: [], helix: [], biomtChains: {}, biomtMatrices: [], symMat: [], pdbID: '', title: ''};
    this.atoms = [];
 
-   this.parsePDB2(source);
+   this.parsePDB2(source, biomt_num);     //added biomt_num by franco
+   console.log(this.protein.biomtChains)
+   console.log(this.protein.biomtMatrices)
    if (!this.parseSDF(source)) this.parseXYZ(source);
    console.log("parsed in " + (+new Date() - time) + "ms");
    

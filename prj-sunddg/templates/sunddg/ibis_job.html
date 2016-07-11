@@ -1,0 +1,117 @@
+{% extends "sunddg/base.html" %}
+
+{% load staticfiles%}
+
+
+{% block main_content %}
+
+
+
+{% if error_message %}<div data-alert class="alert-box alert radius">{{ error_message }}</div>{% endif %}
+{% if messages %}
+{% for message in messages %}
+<div class="messages row">
+    {% if message.tags  == "error" %}
+    <div class="small-12 columns alert-box alert radius">{{ message |safe}}</div>
+    {% endif %}
+</div>
+{% endfor %}
+</ul>
+{% endif %}
+
+
+<style>
+h6.left {
+    margin-right:1rem;
+    display:block;
+}
+</style>
+
+
+<h4> Preparing your job.. </h4>
+
+
+<form action="{% url 'sunddg:save_ibis_job' job_object.job %}" method="post" id="ibis_form" enctype="multipart/form-data">
+    {% csrf_token %}
+    <input type="hidden" id="pdb_container_asu" name="pdb_container_asu" value="">
+    <input type="hidden" id="pdb_container_bio" name="pdb_container_bio" value="">
+    <input type="hidden" id="isNMR" name="isNMR" value="0">
+
+    <div class="row">
+        <div id="console" data-alert class="small-12 columns"></div>
+    </div>
+</form>
+
+<script>
+
+$(document).foundation();
+
+$(document).ready(function(){
+
+    $.get("//www.rcsb.org/pdb/rest/getEntityInfo", {
+            structureId: "{{pdbid | upper}}",
+        })
+        .done(function (xml){
+
+         var method = $(xml).find('Method').attr("name");
+         if (method.search(/nmr/i) >= 0)
+         {
+           // structure is NMR
+           $("[name=isNMR]").prop("value", "1")
+           $("[name=pdb_mol]").prop("disabled", true)
+           $("[name=pdb_mol]").prop("checked", false)
+           warning = "*NMR structure detected. First model will be used";
+           $("#nmr_warning").css("display", "none");
+           //$("#nmr_warning").addClass("secondary alert-box radius");
+           $("#nmr_warning").html(warning);
+           $("#nmr_warning").fadeIn("fast");
+         }
+         else
+         {
+           // structure is not NMR
+           $("[name=isNMR]").prop("value", "0")
+           $("[name=pdb_mol]").prop("disabled", false)
+           $($("[name=pdb_mol]")[0]).prop("checked", true)
+           $("#nmr_warning").html("");
+         }
+        });
+
+    $("#console").append("<div id=\"loading_message\" data-alert class=\"alert-box secondary radius\"> <img src=\"{% static 'myimgs/ajax-loader.gif' %}\" /> Downloading data ... This may take a few seconds </div>");
+
+    var asu_url = "//files.rcsb.org/view/" + "{{pdbid | upper}}" + ".pdb";
+    var asu_url = "//files.rcsb.org/view/" + "{{pdbid | upper}}" + ".pdb";
+    var bio_url = "//www.rcsb.org/pdb/files/" + "{{pdbid | upper}}" + ".pdb" + "{{bioassembly}}";
+    var bio_alternative_url = asu_url;
+
+    $.when(
+        $.get(asu_url, function(data) {
+            $("#pdb_container_asu").val(data);
+        }, dataType="text"),
+        
+        $.get(bio_url, function(data) {
+            $("#pdb_container_bio").val(data);
+        }, dataType="text").then(function(){}, function(){
+            return $.get(bio_alternative_url, function(data) {
+            $("#pdb_container_bio").val(data);
+            }, dataType="text");
+        })
+    ).then(function() { 	
+
+    $("#ibis_form").submit();
+
+    }, function() {
+	// error message:
+	$("#loading_message").remove();
+	var warning = "One of the files for selected PDB entry could not be received from the RCSB website";
+        $("#pdb_warning").css("display", "none")
+    	    .addClass("alert alert-box radius")
+    	    .text(warning)
+    	    .fadeIn("fast");
+    });
+
+});
+
+</script>
+
+
+{% endblock %}

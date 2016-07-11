@@ -4,11 +4,210 @@
 
 {% block main_content %}
 
+<style>
+.supindex 
+{
+	vertical-align:super;
+	font-size:60%;
+} 
+.subindex 
+{
+	vertical-align:sub;
+ 	font-size:60%;
+ }
+
+ .table td { 	
+ 	text-align:center;
+ 	padding-top: 0.2rem;
+    padding-bottom: 0.2rem;
+ }
+h3 {
+    text-align: left;
+}
+p {
+    text-align: justify;
+}
+li {
+    text-align: justify;
+}
+</style>
+
 <div class="row">
     <div class="small-12 columns">
-        <h1>How it works</h1>
-        <p> Paper paragraph and etc </p>
+        <h3>MutaBind Method</h3>
+	<p></p>
+        <p><strong>MutaBind</strong> evaluates the change in binding affinity between proteins (or protein chains) caused by single-site mutations in their sequence. The predictions are based on the structure of the protein-protein complex. </p>
+
+        <p><strong>The MutaBind model</strong> uses molecular mechanics force fields, statistical potentials and fast side-chain optimization algorithms built via multiple linear regression (MLR) and random forest (RF) methods, training on experimental data of changes of binding affinity (&Delta;&Delta;G) for 1925 mutations from 80 protein complexes. Mutations, experimental and prediction data are accessible through ftp://ftp.ncbi.nih.gov/pub/panch/MutaBind. MutaBind is calculated as an average of two values produced by MLR and RF.</p>
+
+        <p><strong>The MutaBind structure optimization protocol.</strong> First we introduced a single mutation on the wild-type structure using the BuildModel module from FoldX(1) software.This step optimized the configurations of the mutated side chain and the neighboring side chains to avoid steric clashes. Missing heavy side chain atoms and hydrogen atoms were added for the wild type and mutant using VMD program(2) based on the topology file from the CHARMM36 force field(3). Then a 100-step energy minimization in the gas phase was carried out for both wild type and mutant using harmonic restraints applied on the backbone atoms of all residues. Energy minimization is used to optimize the side chain conformations, repair distorted geometries and remove steric clashes. Minimization was done only for protein-protein complexes, and protein structures of binding partners were retained assuming the rigid-body binding. The energy minimization were carried out with NAMD program version 2.9(4) using the CHARMM36 force field(3). The current structure optimization protocol was chosen based on its accuracy and speed.</p>
+
+        <p><strong>The MutaBind energy function</strong> incorporates ten distinct terms and the contribution of each term to the MLR and RF is shown in the table.</p>
+        
+	<img style="display:block;margin:auto;width:100%;height:auto" src="{% static 'myimgs/WebMethod.png' %}" />
+
+	{% comment %}
+	<table style="border: solid 1px #FFFFFF;">
+            <tr>
+                <td>
+                    <img style="display:block;margin:auto;width:90%;height:auto" src="{% static 'myimgs/method.PNG' %}" />
+                </td>
+                <td>
+                    <br>
+                    <br>
+                    <br>
+                    <table class="table" style="margin-right: 1.5rem;">
+                        <thead>
+                            <th>Term</th>
+                            <th>MLR</th>
+                            <th>RF</th>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>&Delta;E<span class="subindex">vdw</span><span class="supindex">wt</span></td>
+                                <td>-0.914</td>
+                                <td>462</td>
+                            </tr>
+                            <tr>
+                                <td>&Delta;E<span class="subindex">vdw</span><span class="supindex">mut</span></td>
+                                <td>1.050</td>
+                                <td>692</td>
+                            </tr>
+                            <tr>
+                                <td>&Delta;G<span class="subindex">solv</span><span class="supindex">wt</span></td>
+                                <td>-0.984</td>
+                                <td>445</td>
+                            </tr>
+                            <tr>
+                                <td>&Delta;G<span class="subindex">solv</span><span class="supindex">mut</span></td>
+                                <td>1.020</td>
+                                <td>582</td>
+                            </tr>
+                            <tr>
+                                <td>&Delta;&Delta;G<span class="subindex">fold</span></td>
+                                <td>0.127</td>
+                                <td>1263</td>
+                            </tr>
+                            <tr>
+                                <td>SA<span class="subindex">com</span><span class="supindex">wt</span></td>
+                                <td>-0.350</td>
+                                <td>1009</td>
+                            </tr>
+                            <tr>
+                                <td>SA<span class="subindex">part</span><span class="supindex">wt</span></td>
+                                <td>0.342</td>
+                                <td>1307</td>
+                            </tr>
+                            <tr>
+                                <td>CS</td>
+                                <td>-0.188</td>
+                                <td>629</td>
+                            </tr>
+                            <tr>
+                                <td>&Delta;<span class="subindex">Pro</span><span class="supindex">wt</span></td>
+                                <td>-0.136</td>
+                                <td>69</td>
+                            </tr>
+                            <tr>
+                                <td>&Delta;<span class="subindex">Pro</span><span class="supindex">mut</span></td>
+                                <td>0.113</td>
+                                <td>137</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <br>
+                    <br>
+                    <br>
+                </td>
+            </tr>
+        </table>
+
+	{% endcomment %}
+        <ul style="margin-left: 3rem">
+        	<li>&Delta;E<span class="subindex">vdw</span><span class="supindex">wt</span> and &Delta;E<span class="subindex">vdw</span><span class="supindex">mut</span> are Van der Waals interaction for wild-type and mutant protein complexes respectively. They are calculated as differences between Van der Waals energies of a complex and each interacting partner &Delta;E = &Delta;E<span class="subindex">com</span> - &Delta;E<span class="subindex">part1</span> - &Delta;E<span class="subindex">part2</span> (1) using ENERGY module of CHARMM program(5). The minimized structure of wild-type or mutant complex was used for the calculation. </li>
+        	<li>&Delta;G<span class="subindex">solv</span><span class="supindex">wt</span> and &Delta;G<span class="subindex">solv</span><span class="supindex">mut</span> are the differences between polar solvation energies of a complex and each interacting partner in water. These terms are calculated from solving the Poisson-Boltzmann equation with PBEQ module(6) of CHARMM program using the minimized structure of wild-type or mutant complex. </li>
+		<li>&Delta;&Delta;G<span class="subindex">fold</span> is the difference between unfolding free energy of mutant and wild-type protein complexes, calculated using BuildModel module of FoldX software(1). FoldX calculates unfolding free energy using empirical force field. This term may account for those cases where partners are unfolded in unbound states and can only fold upon binding to each other so the binding affinity from eq (1) cannot be explicitly calculated. </li>
+		<li>SA<span class="subindex">com</span><span class="supindex">wt</span> and SA<span class="subindex">part</span><span class="supindex">wt</span> are solvent accessible surface areas of the wild-type residues in the mutated site in the complex and unbound state respectively. They are calculated using DSSP program(7) for crystal structure of wild-type complex.</li>
+		<li>CS is the conservation score of the mutated site calculated using PROVEAN program(8) which accounts for the fact that binding hotspots (sites contributing the most to the energy of binding) are usually evolutionarily conserved. PROVEAN also takes into account the sequence context of the mutated site and therefore accounts for the alignment quality around a site of interest.</li>
+		<li>&Delta;<span class="subindex">Pro</span><span class="supindex">wt</span> and &Delta;<span class="subindex">Pro</span><span class="supindex">mut</span> account for the ability of proline cyclic structure to introduce constraints on the main-chain dihedral angles which, in turn, can be structurally important for stability or binding is equal to one/zero if proline is present/absent in the mutated site in wild-type or mutant proteins. </li>
+
+		</ul>
+	<br>
+	<p>1.	Guerois, R., Nielsen, J.E. and Serrano, L. (2002) Predicting changes in the stability of proteins and protein complexes: a study of more than 1000 mutations. Journal of molecular biology, 320, 369-387.<br>2. Humphrey, W., Dalke, A. and Schulten, K. (1996) VMD: visual molecular dynamics. J Mol Graph, 14, 33-38, 27-38.<br>3. MacKerell, A.D., Bashford, D., Bellott, M., Dunbrack, R.L., Evanseck, J.D., Field, M.J., Fischer, S., Gao, J., Guo, H., Ha, S. et al. (1998) All-atom empirical potential for molecular modeling and dynamics studies of proteins. The journal of physical chemistry. B, 102, 3586-3616.<br>4. Phillips, J.C., Braun, R., Wang, W., Gumbart, J., Tajkhorshid, E., Villa, E., Chipot, C., Skeel, R.D., Kale, L. and Schulten, K. (2005) Scalable molecular dynamics with NAMD. J. Comput. Chem., 26, 1781-1802.<br>5. Brooks, B.R., Bruccoleri, R.E., Olafson, B.D., States, D.J., Swaminathan, S. and Karplus, M. (1983) Charmm - a Program for Macromolecular Energy, Minimization, and Dynamics Calculations. J. Comput. Chem., 4, 187-217.<br>6. Im, W., Beglov, D. and Roux, B. (1998) Continuum Solvation Model: computation of electrostatic forces from numerical solutions to the Poisson-Boltzmann equation. Comput. Phys. Commun., 111, 59-75.<br>7. Joosten, R.P., te Beek, T.A., Krieger, E., Hekkelman, M.L., Hooft, R.W., Schneider, R., Sander, C. and Vriend, G. (2011) A series of PDB related databases for everyday needs. Nucleic acids research, 39, D411-419.<br>8. Choi, Y., Sims, G.E., Murphy, S., Miller, J.R. and Chan, A.P. (2012) Predicting the functional effect of amino acid substitutions and indels. PloS one, 7, e46688.<br> 
+        <p><strong>More details can be found in our paper.</strong></p>
     </div>
 </div>
+
+
+
+{% comment %}
+<div class="row">
+    <div class="small-12 columns">
+        <p><strong>MutaBind value is the average values of &Delta;&Delta;G obtained from Multiple Linear Regression (MLR) and Random Forest (RF) function. </strong></p>
+        <h4 class="text-center">&Delta;&Delta;G<span class="subindex">MutaBind</span> = (&Delta;&Delta;G<span class="subindex">MLR</span> + &Delta;&Delta;G<span class="subindex">RF</span>)/2</h4>
+        <p>Importance of ten features for multiple linear regression and random Forest model.</p>
+        <table class="table">
+            <thead>
+                <th>Feature</th>
+                <th>MLR</th>
+                <th>RF</th>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>&Delta;E<span class="subindex">vdw</span><span class="supindex">wt</span></td>
+                    <td>-0.914</td>
+                    <td>462</td>
+                </tr>
+                <tr>
+                    <td>&Delta;E<span class="subindex">vdw</span><span class="supindex">mut</span></td>
+                    <td>1.050</td>
+                    <td>692</td>
+                </tr>
+                <tr>
+                    <td>&Delta;G<span class="subindex">solv</span><span class="supindex">wt</span></td>
+                    <td>-0.984</td>
+                    <td>445</td>
+                </tr>
+                <tr>
+                    <td>&Delta;G<span class="subindex">solv</span><span class="supindex">mut</span></td>
+                    <td>1.020</td>
+                    <td>582</td>
+                </tr>
+                <tr>
+                    <td>&Delta;&Delta;G<span class="subindex">fold</span></td>
+                    <td>0.127</td>
+                    <td>1263</td>
+                </tr>
+                <tr>
+                    <td>SA<span class="subindex">com</span><span class="supindex">wt</span></td>
+                    <td>-0.350</td>
+                    <td>1009</td>
+                </tr>
+                <tr>
+                    <td>SA<span class="subindex">part</span><span class="supindex">wt</span></td>
+                    <td>0.342</td>
+                    <td>1307</td>
+                </tr>
+                <tr>
+                    <td>CS</td>
+                    <td>-0.188</td>
+                    <td>629</td>
+                </tr>
+                <tr>
+                    <td>&Delta;<span class="subindex">Pro</span><span class="supindex">wt</span></td>
+                    <td>-0.136</td>
+                    <td>69</td>
+                </tr>
+                <tr>
+                    <td>&Delta;<span class="subindex">Pro</span><span class="supindex">mut</span></td>
+                    <td>0.113</td>
+                    <td>137</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endcomment %}
 
 {% endblock %}

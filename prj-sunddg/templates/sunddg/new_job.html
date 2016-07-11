@@ -7,16 +7,16 @@
 {% endblock %}
 
 {% block main_content %}
-<p class="text-justify"><strong>SunDDG</strong> evaluates the change in binding affinity between proteins
-caused by single-site mutations. Predictions
-are based on the crystal structure of the protein-protein complex. </p>
+<p class="text-justify"><strong>MutaBind</strong> evaluates the effects of variations and disease mutations on protein-protein interactions. 
+It predicts if a mutation disrupts an interaction and calculates the change in binding affinity. The structure of a protein-protein complex is required for this method. </p>
+
 
 {% if error_message %}<div data-alert class="alert-box alert radius">{{ error_message }}</div>{% endif %}
 {% if messages %}
 {% for message in messages %}
 <div class="messages row">
     {% if message.tags  == "error" %}
-    <div class="small-12 columns alert-box alert radius">{{ message }}</div>
+    <div class="small-12 columns alert-box alert radius">{{ message |safe}}</div>
     {% endif %}
 </div>
 {% endfor %}
@@ -31,28 +31,10 @@ h6.left {
 }
 </style>
 
-<!-- 
-<div class="row">
-    <div class="small-8 small-centered columns">
-        <img src="{% static 'myimgs/complexCenter.png' %}"/>
-    </div>
-</div>
-<div class="row">
-    <div class="small-3 columns">
-        <img src="{% static 'myimgs/MutLeft.png' %}"/>
-    </div>
-    <div class="small-6 columns">
-        <img src="{% static 'myimgs/arrow.png' %}" style="margin-top:35px"/>
-    </div>
-    <div class="small-3 columns">
-        <img src="{% static 'myimgs/MutRight.png' %}"/>
-    </div>
-</div> -->
-
 
 <div class="row">
     <div class="small-12 small-centered columns">
-        <img src="{% static 'myimgs/Complex2small.png' %}"/>
+        <a href="{% url 'sunddg:method' %}"><img src="{% static 'myimgs/Complex4.png' %}"/></a>
     </div>
 </div>
 
@@ -60,16 +42,19 @@ h6.left {
 
 <br>
 <hr>
-<h3> Step 1 - Select a Protein Complex </h3>
+<h3> Step 1 - Select Protein Complex </h3>
 
 <br>
 
 <form action="{% url 'sunddg:upload_pdb' %}" method="post" id="pdb_form" enctype="multipart/form-data">
     {% csrf_token %}
     <input type="hidden" id="example" name="example" value="0">
+    <!-- <input type="hidden" id="pdb_container_asu" name="pdb_container_asu" value=""> -->
+    <!-- <input type="hidden" id="pdb_container_bio" name="pdb_container_bio" value=""> -->
+    <!-- <input type="hidden" id="isNMR" name="isNMR" value="0"> -->
     <div class="row">
         <div class="small-3 columns">
-            <label for="pdb_id_input" class="left" style="font-size:1.3rem">Input a PDB code:</label>
+            <label for="pdb_id_input" class="left" style="font-size:1.3rem">Input PDB code:</label>
         </div>
         <div class="small-3 columns">
             <input type="text" id="pdb_id_input" name="pdb_id" style="margin-bottom:0.5rem" placeholder="PDB id code [4-letter code]" class="radius" />
@@ -85,18 +70,34 @@ h6.left {
                     <label for="pdb_asu"></label>
                 </div>
         </div>
-        <div class="small-5 columns">
-            <h6 class="">Bioassembly <span data-tooltip data-options="width:300" aria-haspopup="true" class="has-tip radius" title="For multiple bioassemblies, default bioassembly will be used"><i class="fi-info small"></i></span></h6>
+        <div class="small-1 columns">
+            <select id="bioassemblies" name="bioassembly" style="margin:0;height: 2em;padding: 0;width: 3.4em;">
+                <option value="1">1st</option>
+            </select>
+        </div>
+        <div class="small-4 columns" style="padding-left:0">
+            <h6 class="">Bioassembly <span data-tooltip data-options="width:300" aria-haspopup="true" class="has-tip radius" title="For multiple bioassemblies, default bioassembly will be used (.pdb1)"><i class="fi-info small"></i></span></h6>
             <h6 class="left">Asymmetric Unit</h6>
         </div>
+
         <!--<div class="small-3 end columns">-->
             <!--<p>Asymetric Unit </p>-->
             <!--<p>Bioassembly</p>-->
         <!--</div>-->
     </div>
     <div class="row">
+        <div class="small-5 small-offset-7 columns end">
+            <div id="nmr_warning" style="font-size:0.8rem;color:red"></div>
+        </div>
+    </div>
+    <div class="row">
         <div class="small-12 columns" >
             <div id="pdb_description"></div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="small-12 columns" >
+            <div id="large_warning"></div>
         </div>
     </div>
     <div class="row">
@@ -109,26 +110,23 @@ h6.left {
     <hr>
     <div class="row">
         <div class="small-3 columns">
-            <label for="pdb_file_input" class="left" style="font-size:1.3rem">Upload a PDB file:</label>
+            <label for="pdb_file_input" class="left" style="font-size:1.3rem">Upload PDB file:</label>
         </div>
-        <div class="small-3 columns end">
+        <div class="small-6 columns">
             <input type="file" id="pdb_file_input" name="pdb_file" class="radius"/>
+        </div>
+        <div class="small-6 columns">
+            <label style="font-size:1.1rem">Format description <span data-tooltip data-options="width:300" aria-haspopup="true" class="has-tip radius" title="Uploaded file should follow the standard PDB format. If uploaded file includes multiple models (ex: bio-assembly or NMR structures), please make sure that file does not contain 'MODEL' tags (such as used in the PDB bioassembly files) and does not contain duplicated chain identifiers. Chain identifier should only use the upper- and lower-case letters."><i class="fi-info small"></i></span> for uploaded file</label>
         </div>
     </div>
     <hr>
     <div class="row">
-     <div class="large-12 columns" >
-      <label style="font-size:1.1rem">Additional Options</label>
-      <input id="isPI" type="checkbox" name="isPI" value="isPI"><label style="font-size:1.1rem" for="isPI">Is your complex a protease-inhibitor complex? <span data-tooltip data-options="width:300" aria-haspopup="true" class="has-tip radius" title="This is a special model that gives better predictions for protease inhibitor complexes. Check this box if you want to use it."><i class="fi-info small"></i></span></label>
-      <button type="submit" class="button radius right" id="submit_button">Next</button>
+       <div class="large-12 columns" >
+          <label style="font-size:1.1rem">Additional Options</label>
+          <input id="isPI" type="checkbox" name="isPI" value="isPI"><label style="font-size:1.1rem" for="isPI">Is protease-inhibitor complex? <span data-tooltip data-options="width:300" aria-haspopup="true" class="has-tip radius" title="This is a special model that gives better predictions for protease inhibitor complexes. Check this box if you want to use it."><i class="fi-info small"></i></span></label>
+          <button type="submit" class="button radius right" id="submit_button">Next</button>
+      </div>
     </div>
-  </div>
- <!--  <br>
-    <div class="row">
-        <div class="small-12 columns">
-            <button type="submit" class="button radius right" if="submit_button">Next</button>
-        </div>
-    </div> -->
     <div class="row">
         <div id="console" data-alert class="small-12 columns"></div>
     </div>
@@ -139,11 +137,50 @@ h6.left {
 $(document).foundation();
 
 $(document).ready(function(){
+/*
+$("#submit_button").on('click', function(){
+    $("#console").append("<div id=\"loading_message\" data-alert class=\"alert-box secondary radius\"> <img src=\"{% static 'myimgs/ajax-loader.gif' %}\" /> Uploading data ... This may take a few seconds </div>");
+    
+    if ($('#pdb_file_input').get(0).files.length != 0) {
+	// there is a file, use it
+	return true; // submit
+    }
 
-$("#pdb_form").on('submit', function(){
-    $("#console").append("<div data-alert class=\"alert-box secondary radius\"> <img src=\"{% static 'myimgs/ajax-loader.gif' %}\" /> Uploading data ... This may take a few seconds </div>");
+    var asu_url = "//files.rcsb.org/view/" + $("#pdb_id_input").val().toUpperCase() + ".pdb";
+    var bio_url = "//www.rcsb.org/pdb/files/" + $("#pdb_id_input").val().toUpperCase() + ".pdb" + $("#bioassemblies").val();
+    var bio_alternative_url = asu_url;
+
+    $.when(
+		$.get(asu_url, function(data) {
+		    $("#pdb_container_asu").val(data);
+		}, dataType="text"),
+		
+		$.get(bio_url, function(data) {
+		    $("#pdb_container_bio").val(data);
+		}, dataType="text").then(function(){}, function(){
+		    return $.get(bio_alternative_url, function(data) {
+			$("#pdb_container_bio").val(data);
+		    }, dataType="text");
+		})
+    ).then(function() {
+	//ok, we loaded pdb. submit the form
+	//console.log($("#pdb_container_asu").val());
+	//console.log($("#pdb_container_bio").val());
+	
+
+    $("#pdb_form").submit();
+    }, function() {
+	// error message:
+	$("#loading_message").remove();
+	var warning = "One of the files for selected PDB entry could not be received from the RCSB website";
+        $("#pdb_warning").css("display", "none")
+    	    .addClass("alert alert-box radius")
+    	    .text(warning)
+    	    .fadeIn("fast");
+    });
+    return false; // do not submit
 });
-
+*/
 
 $("#load_example").click(function(){
     $("#pdb_id_input").val("1CSE")
@@ -154,5 +191,13 @@ $("#load_example").click(function(){
 
 });
 </script>
+
+
+<div class="row">
+    <div class="small-12 columns">
+	<p style="margin:0;"><strong>Reference</strong></p>
+        <p style="line-height:1.2"><font size="2" color="black"> Li M, Simonetti FL, Goncearenco A & Panchenko AR. <i> MutaBind estimates and interprets the effects of sequence variants on protein-protein interactions.</i><strong> Nucleic Acids Res. (2016 Web Server Issue). PMID:</strong></font><a href="//www.ncbi.nlm.nih.gov/pubmed/?term=MutaBind+estimates+and+interprets+the+effects+of+sequence+variants+on+protein%E2%80%93protein+interactions"><font size="2"> 27150810</font></a></p>
+    </div>
+</div>
 
 {% endblock %}

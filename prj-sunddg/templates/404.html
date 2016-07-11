@@ -1,0 +1,17 @@
+{% extends "sunddg/base.html" %}
+
+{% load staticfiles%}
+
+{% block main_content %}
+<div class="row">
+    <div class="small-12 columns">
+
+
+<h2>Page not found</h2>
+<p> The job id you are looking is not valid or is outdated. Please start the submission process again </p>
+<a href="/projects/mutabind/index.fcgi/mutabind">Mutabind Home</a>	
+        {{ content }}
+</div>
+</div>
+
+{% endblock %}

@@ -68,7 +68,7 @@ for (var i = o_jobs.length - 1; i >= 0 ; i--)
 	job = o_jobs[i]
 	if (job != "")
 	{ 
-		date1 = new Date(job.substr(0,4)+"-"+job.substr(4,2)+"-"+job.substr(6,2)) //+"T"+job.substr(8,2)+":"+job.substr(10,2)
+		date1 = new Date(job.substr(0,4)+"-"+job.substr(4,2)+"-"+job.substr(6,2)+"T"+job.substr(8,2)+":"+job.substr(10,2)+":00") //+"T"+job.substr(8,2)+":"+job.substr(10,2)
 		var msg = '<div style="margin-bottom:0.5rem" class="alert-box secondary radius"> Job: <a href="'+job+'">'+job+" - "+date1.toDateString()
 		if (job_descriptions[job] != null && job_descriptions[job] != undefined)
 		{

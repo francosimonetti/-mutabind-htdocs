@@ -36,6 +36,10 @@
     /*  #partner1 {background:rgba(0, 116, 217, 0.4)}
       #partner2 {background:rgba(57, 204, 204, 0.4)}*/
 
+    .info_status{
+        color:#0370DF;
+        cursor:pointer;
+    }
 </style>
 
 {% if error_message %}<div data-alert class="alert-box alert radius">{{ error_message }}</div>{% endif %}
@@ -72,10 +76,10 @@
 <div class="row"> 
     <div class="small-6 columns" style="padding:0">
             <div class="panel radius data_panel">
-                <p style="margin-bottom:0">
+                <p style="margin-bottom:0.5rem">
                     {% if pdbid %}
-                        <b>PDB id</b>: <a target="_blank" href="http://www.rcsb.org/pdb/explore/explore.do?structureId={{pdbid}}">{{pdbid|upper}}</a>
-                        <!-- Check Interactions at MMDB<a target="_blank" href="http://www.ncbi.nlm.nih.gov/Structure/mmdb/mmdbsrv.cgi?uid={{pdbid|safe}}"><i class="fi-page-export small"></i></a> -->
+                        <b>PDB id</b>: <a target="_blank" href="//www.rcsb.org/pdb/explore/explore.do?structureId={{pdbid}}">{{pdbid|upper}}</a>
+                        <!-- Check Interactions at MMDB<a target="_blank" href="//www.ncbi.nlm.nih.gov/Structure/mmdb/mmdbsrv.cgi?uid={{pdbid|safe}}"><i class="fi-page-export small"></i></a> -->
                     {% else %}        
                         <b>PDB file</b>: {{pdb_filename}}
                     {% endif %}
@@ -102,9 +106,7 @@
                                     <br>
                                 {% endif %}
                             {% endfor %}
-                            {% if partner2|length > 3 %}
-                                <span id="more1" style="font-size:0.8rem">and more...<br></span>
-                            {% endif %}
+                            
                             </p>
 
                             <div id="info_data1" style="display:none">
@@ -123,7 +125,11 @@
                                 </p>
                             </div>
 
-                            <p class="overflowtext">
+                            {% if partner2|length > 3 %}
+                                <span class="info_status" id="more1" style="font-size:0.8rem">show more...<br></span>
+                            {% endif %}
+
+                            <p class="overflowtext" style="margin-top:0.5rem">
                             <b>Partner 2</b><br>
                             {% for chain  in partner2 %}
                                 {% if job_object.firstmodelwarning > 0 %}
@@ -149,15 +155,7 @@
                                 {% endif %}
                             {% endfor %}
 
-                            {% if job_object.firstmodelwarning > 0 %}
-                                {% if partner2|length > 3 %}
-                                    <span id="more2" style="font-size:0.8rem">and more...<br></span>
-                                {% endif %}
-                            {% else %}
-                                {% if partner2|length > 2 %}
-                                    <span id="more2" style="font-size:0.8rem">and more...<br></span>
-                                {% endif %}
-                            {% endif %}
+                            
                             </p>
 
                             <div id="info_data2" style="display:none">
@@ -187,12 +185,21 @@
                                 {% endfor %}
                                 </p>
                             </div>
+                            {% if job_object.firstmodelwarning > 0 %}
+                                {% if partner2|length > 3 %}
+                                    <span class="info_status" id="more2" style="font-size:0.8rem">show more...<br></span>
+                                {% endif %}
+                            {% else %}
+                                {% if partner2|length > 2 %}
+                                    <span class="info_status" id="more2" style="font-size:0.8rem">show more...<br></span>
+                                {% endif %}
+                            {% endif %}
                         {% if partner1|length > 3 or partner2|length > 3 %}
-                            <div class="row" style="margin-top:0.4rem">
+                            <!-- <div class="row" style="margin-top:0.4rem">
                                 <div class="small-12 columns">
-                                    <button id="info_status" style="margin-bottom:0;padding-top:0.2rem;padding-bottom:0.2rem;margin-top:0.2rem" class="button round tiny right">Show more</button><!-- <i  class="fi-x large"></i> -->
+                                    <button id="info_status" style="margin-bottom:0;padding-top:0.2rem;padding-bottom:0.2rem;margin-top:0.2rem" class="button round tiny right">Show more</button>
                                 </div>
-                            </div>
+                            </div> -->
                         {% endif %}
                     </div>
                 </div>
@@ -255,7 +262,7 @@
                 </select>
             </div>
             <div class="small-3 columns" >
-                <select name="res_select{{it}}" class="radius" >
+                <select name="res_select{{it}}" class="res_select radius" >
                     <option value="-999"> Select a Residue </option>
                 </select>
             </div>
@@ -302,8 +309,17 @@
 
    
 </form>
+<div>
+
+</div>
 
 <script>
+
+
+    {% if job_object.ibis_residue %}
+        var ibis_residue = {{ ibis_residue }}
+        var ibis_chain = "{{ ibis_chain }}"
+    {% endif %}
 
 
     var pdb_selected_residue = "";
@@ -391,12 +407,26 @@ var color_per_chain = true
 
 // ================ GLmol =============================
 
+// For detecting GLmol support
+var c = function() {
+    if (window.WebGLRenderingContext) {
+        for (var a = document.createElement("canvas"), d = ["webgl", "experimental-webgl", "moz-webgl", "webkit-3d"], b = !1, c = 0; 4 > c; c += 1) try {
+            if ((b = a.getContext(d[c])) && "function" == typeof b.getParameter) return 1
+        } catch (p) {}
+        return -1
+    }
+    return 0
+};
+
+
 // some "global" variables
 
 var draw_flag = false;
 var all_res_to_zoom = [];
 
 {% if pdbid %}
+
+    try {
 
     var pdbid = "{{pdbid|safe}}";
     var pdb = new GLmol('pdb_container');
@@ -418,11 +448,21 @@ var all_res_to_zoom = [];
 
         all_res_to_zoom = []
         console.log(unit)
+
+        console.log("biomtChainsStart")
+        console.log(this.protein.biomtChainsStart)
+        console.log("biomtRead")
+        console.log(this.protein.biomtRead)
+        console.log("biomtChainsEnd")
+        console.log(this.protein.biomtChainsEnd)
+        console.log("biomtMolecules")
+        console.log(this.protein.biomtMolecules)
+
         for (var p in partners)
         {
             chains = partners[p]
 
-            if (unit == "asu")
+            if (unit == "asu" || unit == "None")
             {   
                 for (var c in chains)
                 {
@@ -465,6 +505,7 @@ var all_res_to_zoom = [];
             
             if (unit == "bio")
             {   
+
                 for (var c in chains)
                 {
                     c_m = chains[c];
@@ -478,7 +519,8 @@ var all_res_to_zoom = [];
                     else {
                         this.colorByChain(all, [colors[p_it]]); }
 
-                    var i = parseInt(modelid);
+                    // var i = parseInt(modelid);
+                    var i = this.protein.biomtChainsStart + parseInt(modelid)
                     var mat = this.protein.biomtMatrices[i];
                     if ( mat == undefined && this.protein.biomtMatrices.length > 0) // this is for cases where the biounit is smaller than the asu
                     {
@@ -547,7 +589,7 @@ var all_res_to_zoom = [];
     }; // end of defineRepresentation
 
     var time = new Date();
-    /*$.get("http://www.rcsb.org/pdb/files/{{pdbid}}.pdb", function(ret) {
+    /*$.get("//www.rcsb.org/pdb/files/{{pdbid}}.pdb", function(ret) {
       $("#pdb_container_src").val(ret);
         pdb.loadMolecule();
         console.log("downloaded in " + (+new Date() - time) + "ms");
@@ -555,7 +597,10 @@ var all_res_to_zoom = [];
 
     var content = '{{ pdbasu |escapejs }}'
     $("#pdb_container_src").val(content);
-    pdb.loadMolecule();
+    var biomt_num = '{{ bioassembly |safe}}'
+    if (biomt_num == "None"){ biomt_num = undefined; }
+    pdb.loadMolecule(undefined, biomt_num);
+    // pdb.loadMolecule();
     console.log("downloaded in " + (+new Date() - time) + "ms");
 
     $("#pleasewait").empty()
@@ -563,6 +608,20 @@ var all_res_to_zoom = [];
 
     // pdb.rebuildScene();
     // pdb.show();
+    }
+    catch(err)
+    {
+        var m = c();
+        if (1 > m) {
+            var q = ""
+            q = m ? 'This page requires <a href="//get.webgl.org/">WebGL</a> in order to interactively view 3D structures. However, the WebGL function in your browser is not enabled. To see the interactive view of the structure, modify the settings in your web browser to enable WebGL.' : 'This page requires <a href="//get.webgl.org/">WebGL</a> in order to interactively view 3D structures. However, your browser does not support WebGL. To see the interactive view of the structure, upgrade your web browser to a newer version.'
+        }
+
+
+        $("#pleasewait").empty()
+        errmsg = '<div class="small-12 columns alert-box alert radius">PDB structure viewer could not be loaded. '+q+'</div>'
+        $("#pleasewait").html(errmsg)
+    }
 
 {% endif %}
 
@@ -572,34 +631,32 @@ var all_res_to_zoom = [];
 
 $(document).ready(function(){
 
+var info_status = true;
 
-
-$("#info_status").on('click', function(){
-    if ($("#info_status").html() == "Show more")
+$(".info_status").on('click', function(){
+    if (info_status)
     {
         $(".data_panel").css("height", "auto")
         $("#info_data1").css("display", "block")
         $("#info_data2").css("display", "block")
-        $("#more1").css("display", "none")
-        $("#more2").css("display", "none")
-        $("#info_status").html("Show less")    
+        $("#more1").html("show less..")
+        $("#more2").html("show less..")
+        info_status = false;
     }
     else
     {
-        if ($("#info_status").html() == "Show less")
-        {
-            $("#info_data1").css("display", "none")
-            $("#info_data2").css("display", "none")
-            $("#more1").css("display", "block")
-            $("#more2").css("display", "block")
-            $("#info_status").html("Show more")
-            $(".data_panel").css("height", "340px")    
-        }
+        $("#info_data1").css("display", "none")
+        $("#info_data2").css("display", "none")
+        $("#more1").html("show more..")
+        $("#more2").html("show more..")
+        $(".data_panel").css("height", "340px")  
+        info_status = true;  
     } 
 })
 
 
 {% if pdb_filename %}
+    try {
     
     // var colors = [0.33, 0.66] 
 
@@ -635,7 +692,7 @@ $("#info_status").on('click', function(){
 
             var asu = new THREE.Object3D();
 
-// ================== Draw selected residue ===================
+    // ================== Draw selected residue ===================
             if (pdb_selected_chain != undefined && pdb_selected_chain != "")
             {
                 var s_chain = pdb_selected_chain.split("_")
@@ -656,7 +713,7 @@ $("#info_status").on('click', function(){
                     }
                 }
             }
-// ===========================================================
+    // ===========================================================
             all_res_to_zoom = all_res_to_zoom.concat(all)
             this.drawCartoon(asu, all, this.curveWidth, this.thickness);
             this.modelGroup.add(asu);
@@ -672,6 +729,21 @@ $("#info_status").on('click', function(){
     pdb.show();
     $("#pleasewait").empty()
     $("#pleasewait").remove()
+
+    }
+    catch(err)
+    {
+        var m = c();
+        if (1 > m) {
+            var q = ""
+            q = m ? 'This page requires <a href="//get.webgl.org/">WebGL</a> in order to interactively view 3D structures. However, the WebGL function in your browser is not enabled. To see the interactive view of the structure, modify the settings in your web browser to enable WebGL.' : 'This page requires <a href="//get.webgl.org/">WebGL</a> in order to interactively view 3D structures. However, your browser does not support WebGL. To see the interactive view of the structure, upgrade your web browser to a newer version.'
+        }
+
+
+        $("#pleasewait").empty()
+        errmsg = '<div class="small-12 columns alert-box alert radius">PDB structure viewer could not be loaded. '+q+'</div>'
+        $("#pleasewait").html(errmsg)
+    }
 
 {% endif %}
 
@@ -716,7 +788,7 @@ function addMutation() {
 
         var element = '<div class="row" id="'+new_num+'">';
         element += '<div class="small-3 columns">';
-        element += '<select class="chain_select" name="chain_select'+new_num+'">';
+        element += '<select class="chain_select radius" name="chain_select'+new_num+'">';
         element += '<option value="-999">Select Chain</option>';
 /*        for (var chain in chains_residues){
 
@@ -735,7 +807,7 @@ function addMutation() {
         for (var i in chain_data["chain_models"]){
 
             var chain = chain_data["chain_models"][i]
-            console.log(chain)
+            // console.log(chain)
             if (chain in chains_residues)
             {
                var myRegexp = /_(\d+)$/;
@@ -752,9 +824,9 @@ function addMutation() {
         }
 
         element += '</select></div><div class="small-3 columns" >';
-        element += '<select name="res_select'+new_num+'"><option value="-999"> Select a Residue </option></select>';
+        element += '<select name="res_select'+new_num+'" class="res_select radius"><option value="-999"> Select a Residue </option></select>';
         element += '</div><div class="small-3 columns">';
-        element += '<select name="mut_select'+new_num+'"><option value="-999"> Mutate for.. </option></select></div>';
+        element += '<select name="mut_select'+new_num+'" class="radius" ><option value="-999"> Mutate for.. </option></select></div>';
 
         element += '<div class="small-3 columns text-center">';
         element += '<button  class="draw_mut button tiny round" style="padding-top:0.2rem;padding-bottom:0.2rem;margin-top: 0.6rem;">View</button></div></div>';
@@ -849,6 +921,35 @@ function updateBinders (){
 
 
 
+        $(".res_select").unbind();
+        $(".res_select").on('change', function(){
+            var selected_res = $(this).val();
+            var row_number = $(this).parent().parent().attr('id');
+
+            // repopulate mut element as an aminoacid has been deleted on previous selection
+            var mut_element = $('[name=mut_select'+row_number+']');
+            $(mut_element).empty();
+
+            var html = '<option value="-999">Mutate for..</option>';
+            $(mut_element).append(html);
+
+            for (e in dictionary)
+            {
+                // var html = '<option value="'+dictionary[e]+'">'+e+'</option>';
+                var html = '<option value="'+dictionary[e]+'">'+dictionary[e]+" ("+e+")"+'</option>';
+                $(mut_element).append(html);
+            }
+
+            //console.log(selected_res);
+            //console.log("row number "+row_number);
+            var selected_aa = selected_res.split("_")[0];
+            /*console.log("aa selected "+selected_aa);*/
+            if (selected_aa !=-999)
+            {
+                $("[name=mut_select"+row_number+"]").find("option").filter("[value="+selected_aa+"]").remove();    
+            }
+        });
+
 
 
         $(".chain_select").unbind();
@@ -872,6 +973,8 @@ function updateBinders (){
                     numbers.push(chain_data[selected_chain][i].replace(/ /g,''));
                 }
 
+                var html = '<option value="-999">Select a Residue</option>';
+                $(select_element).append(html);
                 for (var res in numbers)  // .sort(function(a, b){return a-b})
                 {
                     var resid = chains_residues[selected_chain][numbers[res]].resid;
@@ -886,13 +989,14 @@ function updateBinders (){
                     }                    
                 }
 
-                var select_element = $('[name=mut_select'+row_number+']');
+                /*var mut_element = $('[name=mut_select'+row_number+']');
                 for (e in dictionary)
                 {
                     // var html = '<option value="'+dictionary[e]+'">'+e+'</option>';
                     var html = '<option value="'+dictionary[e]+'">'+dictionary[e]+" ("+e+")"+'</option>';
-                    $(select_element).append(html);
-                }
+                    $(mut_element).append(html);
+                }*/
+                $('[name=res_select'+row_number+']').trigger("change")
             }
             else
             {
@@ -905,7 +1009,11 @@ function updateBinders (){
                 var html = '<option value="-999"> Mutate for.. </option>';
                 $(select_element).html(html);
             }
+
         });
+
+
+
 }
 
 updateBinders();
@@ -928,6 +1036,11 @@ $("#delM").on('click', function(){
     })
 {% endif %}
 
+{% if job_object.from_ibis > 0 %}
+    $(".chain_select").find("option").filter("[value="+ibis_chain+"]").prop("selected", true)
+    $(".chain_select").trigger("change")
+    $("[name=res_select1]").find("option").filter("[value$=_"+ibis_residue+"]").prop("selected", true)
+{% endif %}
 
 
 });  // fin document ready

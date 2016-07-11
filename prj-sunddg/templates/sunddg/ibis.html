@@ -1,0 +1,174 @@
+<style>
+.alert-box {
+  background: #f7f7f7;
+  color: #333;
+  border: none;
+  border-left: 6px solid #008CBA;
+  box-shadow: 0 5px 8px -6px rgba(0, 0, 0, 0.2); }
+  .alert-box.success {
+    background: #f7f7f7;
+    color: #333; }
+  .alert-box.alert {
+    background: #f7f7f7;
+    color: #333; }
+  .alert-box.warning {
+    background: #f7f7f7;
+    color: #333; }
+  .alert-box.info {
+    background: #f7f7f7;
+    color: #333; }
+  .alert-box.small {
+    padding-top: 0.25rem;
+    padding-bottom: 0.25rem;
+    font-size: 0.75rem; }
+    .alert-box.small .close {
+      font-size: 1.5rem; }
+  .alert-box.large {
+    padding-top: 1.5rem;
+    padding-bottom: 1.5rem;
+    font-size: 2rem; }
+    .alert-box.large .close {
+      font-size: 3rem; }
+  .alert-box .close {
+    font-size: 2rem;
+    line-height: 1.25rem; }
+
+table.ibis-table {
+  margin: 0px;
+}
+
+table.ibis-table tr td {
+  padding: 0px 5px;
+  text-align: center;
+}
+td.compact {
+  padding: 0px 1px;
+  text-align: center;
+}
+
+span a{
+  color: inherit;
+}
+
+span a:hover{
+  background-color: lightgray;
+}
+
+div.scroller{
+    overflow-x: auto;
+    white-space: nowrap;
+}
+
+::-webkit-scrollbar {
+  -webkit-appearance: none;
+    width: 7px;
+}
+::-webkit-scrollbar-thumb {
+    border-radius: 4px;
+    background-color: rgba(200, 200, 200, .5);
+    -webkit-box-shadow: 0 0 1px rgba(255, 255, 255, .5);
+}
+</style>
+
+<h4 id="modalTitle">Homologous binding sites from IBIS server</h4>
+<a class="close-reveal-modal" aria-label="Close">&#215;</a>
+
+<div class="row">
+<div class="small-12 column">
+
+<br>
+        
+{% if error %}
+<div class="row">
+  <div class="small-6 small-centered columns">
+    <div class="alert-box alert">
+        <strong></strong> {{error}} 
+      <!-- <a href="#" class="close">X</a> -->
+    </div>
+  </div>
+</div>
+
+{% endif %}
+
+{% if interac %}
+    <div class="row">
+    <div class="large-12 columns">
+    <a href="//www.ncbi.nlm.nih.gov/Structure/ibis/ibis.cgi?type=3&id={{sdi}}" onclick="return confirm('Would you like to explore these binding sites in IBIS web server?');">IBIS server</a>
+    identified protein-protein complexes and binding sites that are homologous to the query (PDB {{pdb}}, chain {{chain}}) and include site {{resn}}{{residue}}.
+    Alignments of binding site residues are colored according to their conservation (red denoting highly conserved positions).
+    Mutated site is highlighted in yellow. Click on a residue in a homologous structure to check it in MutaBind. See IBIS for partner description.
+    </div>
+    </div>
+    <br>
+    {% for row in interac %}
+        {% if row.residue_match %}
+        <h5>Interaction partner <strong>{{row.partner}}</strong>:</h5>
+        <div class="scroller">
+        <table class="ibis-table" role="grid">
+        <thead>
+          <tr>
+            <th>PDB</th>
+            <th>Chain</th>
+            <th>Partner&nbsp;chain</th>
+            <th width="2" colspan="{{row.site|length}}">Binding site residues</th>
+          </tr>
+        </thead>
+        
+        <tr style="border-bottom: 1px solid black !important;">
+            <td><strong>{{pdb}}</strong></td>
+            <td><strong>{{chain}}</strong></td>
+            <td>&nbsp;</td>
+            {% for s in row.site %}
+            <td class="compact" style="background: {% if s.highlight %} yellow {% else %} white {% endif %};">
+                <span
+                    {% if s.conserv == "1" %} style="color:  #e55;" {% endif %}
+                    {% if s.conserv == "2" %} style="color:  #e99;" {% endif %}
+                    {% if s.conserv == "3" %} style="color:  #888;" {% endif %}
+                >
+                <!--
+                <a href="//mwebdev2.ncbi.nlm.nih.gov/projects/mutabind/" onclick="return confirm('Would you like to test {{h.pdb}}:{{h.chain1}} residue {{s.resn}}{{s.resi}} in Mutabind?');">{{s.resn}}{{s.resi}}</a>
+                -->
+                {{s.resn}}{{s.resi}}
+                </span>
+            </td>
+            {% endfor %}
+        </tr>
+
+        {% for h in row.homologs %}
+            <tr>
+                <td>{{h.pdb}}</td>
+                <td>{{h.chain1}}</td>
+                <td>{{h.chain2}}</td>
+                {% for s in h.site %}
+                <td class="compact" style="background: {% if s.highlight %} yellow {% else %} white {% endif %};">
+                    <span
+
+                        {% if s.conserv == "1" %} style="color:  #e55;" {% endif %}
+                        {% if s.conserv == "2" %} style="color:  #e99;" {% endif %}
+                        {% if s.conserv == "3" %} style="color:  #888;" {% endif %}
+                    >
+                    {% if s.resn != "-" %}
+                    <a href="{% url 'sunddg:set_mutations_ff' %}?pdb={{h.pdb}}&partner1={{h.chain1}}&partner2={{h.chain2}}&residue={{s.resi}}" onclick="return confirm('Would you like to test {{h.pdb}}:{{h.chain1}} residue {{s.resn}}{{s.resi}} in Mutabind?');">
+
+                    {{s.resn}}
+                    <!-- {{s.resn}}{% if s.resn != "-" %}{{s.resi}}{% endif %} -->
+                    </a>
+                    {% else %}
+                    {{s.resn}}
+                    {% endif %}
+                    </span>
+                </td>
+                {% endfor %}
+            </tr>
+        {% endfor %}
+
+        </table>
+        </div>
+        <br>
+        {% endif %}
+    {% endfor %}
+
+{% endif %}
+
+</div>
+</div>

@@ -3,9 +3,9 @@
 {% load staticfiles%}
 
 
-
 {% block main_content %}
 
+<script type="text/javascript" src="{% static 'foundation/js/foundation/foundation.reveal.js' %}"></script>
 
 <script>
 
@@ -64,7 +64,7 @@ for (var i in o_jobs)
     {
         date1 = new Date(job.substr(0,4)+"-"+job.substr(4,2)+"-"+job.substr(6,2)+"T"+job.substr(8,2)+":"+job.substr(10,2))
         aux = new Date()
-        date2 = new Date( aux.getFullYear()+"-"+ ("00"+(aux.getMonth()+1)).slice(-2)+"-"+aux.getDate())
+        date2 = new Date( aux.getFullYear()+"-"+ ("00"+(aux.getMonth()+1)).slice(-2)+"-"+("0" + aux.getDate()).slice(-2))
         var timeDiff = Math.abs(date2.getTime() - date1.getTime());
         var diffDays = Math.ceil(timeDiff / (1000 * 3600 * 24)); 
         if (diffDays < 8)
@@ -92,63 +92,69 @@ localStorage.setItem("job_descriptions", JSON.stringify(n_jobs_desc))
 
 {% load replace_decrease %}
 
-<!-- <ul class="breadcrumbs">
-  <li class="unavailable"><a href="#">Step 1</a></li>
-  <li class="unavailable"><a href="#">Step 2</a></li>
-  <li class="unavailable"><a href="#">Step 3</a></li>
-  <li class="current"><a href="{% url 'sunddg:results' job_object.job %}">
-  {% if job_object.status == 2 %}
-    Results
-  {% elif job_object.status >= -1 and job_object.status < 2 %}
-    Calculating...
-  {% elif job_object.status == -999 %}
-    Error
-  {% endif %} 
-  </a></li>
-</ul> -->
-
 
 <h2> {{ main_title }}</h2>
-{% if content%}
-    <p class="text-center"><img src="{%  static 'myimgs/atom.GIF' %}" /></p>
+{% if job_object.status == -1 %}
+    <p class="text-center"> Your Job is waiting in the queue...</p>
+    <p> <strong>Estimated time to complete: {{time|safe}} minutes.</strong></p>
 {% endif %}
+
+{% if job_object.status == 0 %}
+    <p class="text-center"><img src="{%  static 'myimgs/atom.GIF' %}" /></p>
+    <p> <strong>Estimated time to complete: {{time|safe}} minutes.</strong></p>
+{% endif %}
+
 {% if job_object.status == -999 %}
-    <h4> There was an error while processing your results</h4>
-    <h5>Please contact us so we can fix it</h5>
+    <h4> There was an error while processing your results.</h4>
+    <h5>Please contact us so we can fix it.</h5>
     <h5> Your Job Id is {{job_object.job}}</h5>
 {% endif %}
+
+{% if job_object.status == -998 %}
+    <h4> There was an error with your input data.</h4>
+    <h5> The provided interaction partners do not contact with each other. </h5>
+    <h5> Please check your data and submit a new job.</h5>
+    <h5> Your Job Id is {{job_object.job}}</h5>
+{% endif %}
+
 
 {% if job_object.status < 2 and job_object.status > -100 %}
 
     
     {% if email %}
-        <form data-abide action="{% url 'sunddg:save_email' job_object.job %}" method="post" id="email_form" enctype="multipart/form-data">
+        <form data-abide action="{% url 'sunddg:save_email_and_description' job_object.job %}" method="post" id="email_form" enctype="multipart/form-data">
             {% csrf_token %}
-            <p style="margin-bottom:0"> <b>Notify to:</b> {{ email |safe}} <button class="button tiny radius" id="change_email">Change</button></p>
+            <p style="margin-bottom:0"> <b>Notify to:</b> {{ email |safe}}</p>
+
+        <!--<button class="button tiny radius" id="change_email">Change</button>
             <div class="row hide" id="email_field">
                 <div class="small-9 columns">
                     <label><b>Change Email Address (Optional)</b>
-                        <input type="email" name="email" placeholder="email@example.com" class="radius">
+                        <input type="email" name="email" placeholder="email@example.com" class="radius"/>
                     </label>
                     <small class="error">A valid email address is required.</small>
                 </div>
                 <div class="small-3 columns">
-                    <button type="submit" class="button tiny radius" style="display:none;margin-bottom:0;margin-top:1.4rem" id="submit_email">Notify me!</button>
+                    <button type="submit" class="button tiny radius" style="margin-bottom:0;margin-top:1.4rem" id="submit_email">Notify me!</button>
                 </div>
-          </div>
-        
-        </form>
+            </div>
+        -->
         <script>
-            $("#change_email").on("click", function(){
-                $("#email_field").removeClass("hide");
-                $("#submit_email").css("display", "inherit");
-                $("#change_email").css("display", "none");
-                return false;
-            });
+        //  $("#change_email").on("click", function(event){
+        //      event.preventDefault();
+        //      $("#email_field").removeClass("hide");
+        //      $("#submit_email_row").removeClass("hide");
+        //      // $("#submit_email").css("display", "inherit");
+        //      $("#change_email").css("display", "none");
+        //      return false;
+        //  });
         </script>
+
+
+
     {% else %}
     <p>You can bookmark this page or leave us your email and we will notify you when it's ready.</p>
-        <form data-abide action="{% url 'sunddg:save_email' job_object.job %}" method="post" id="email_form" enctype="multipart/form-data">
+        <form data-abide action="{% url 'sunddg:save_email_and_description' job_object.job %}" method="post" id="email_form" enctype="multipart/form-data">
             {% csrf_token %}
             <div class="row">
                 <div class="small-9 columns">
@@ -162,31 +168,28 @@ localStorage.setItem("job_descriptions", JSON.stringify(n_jobs_desc))
                 </div>
           </div>
         <!-- <button type="submit" class="button tiny radius" id="submit_email">Notify me!</button> -->
-        </form>
+        <!-- </form> -->
 
 
     {% endif %}
 
     {% if job_object.description %}
-        <form data-abide action="{% url 'sunddg:save_description' job_object.job %}" method="post" id="desc_form" enctype="multipart/form-data">
-            {% csrf_token %}
-            <p> <b>Job description:</b> {{ job_object.description |safe}} </p>        
+            <p> <b>Job description:</b> {{ job_object.description |safe}} </p>    
         </form>
     {% else %}
+    <br>
     <p>You can add a description to your job so it is easier to remember.</p>
-        <form data-abide action="{% url 'sunddg:save_description' job_object.job %}" method="post" id="desc_form" enctype="multipart/form-data">
-            {% csrf_token %}
-            <div class="row">
-                <div class="small-9 columns">
-                    <label><b>Job Description (Optional)</b>
-                        <input type="text" name="description" pattern="alfanumerico" class="radius">
-                    </label>
-                    <small class="error">Only alphanumeric characters are allowed.</small>
-                </div>
-                <div class="small-3 columns">
-                    <button type="submit" class="button tiny radius" style="margin-bottom:0;margin-top:1.4rem" id="submit_email">Save</button>
-                </div>
-          </div>
+        <div class="row">
+            <div class="small-9 columns">
+                <label><b>Job Description (Optional)</b>
+                    <input type="text" name="description" pattern="alfanumerico" class="radius">
+                </label>
+                <small class="error">Only alphanumeric characters are allowed.</small>
+            </div>
+            <div class="small-3 columns">
+                <button type="submit" class="button tiny radius" style="margin-bottom:0;margin-top:1.4rem" id="submit_email">Save</button>
+            </div>
+        </div>
         <!-- <button type="submit" class="button tiny radius" id="submit_email">Notify me!</button> -->
         </form>
     {% endif %}
@@ -199,14 +202,22 @@ localStorage.setItem("job_descriptions", JSON.stringify(n_jobs_desc))
 <div class="row">
     <div class="small-6 columns">
         <ul>
+                <li><b>Job Id:</b> {{jobid|safe}}</li>
             {% if pdb_id %}
-                <li><b>PDB id:</b> {{pdb_id|upper}}</li>
+                <li><b>PDB Id:</b> {{pdb_id|upper}}</li>
             {% endif %}
             {% if pdb_file %}
-                <li><b>PDB file:</b> {{pdb_file}}</li>
+                <li><b>PDB File:</b> {{pdb_file}}</li>
             {% endif %}
                 <li><b>Partner 1:</b> {{ p1 }}</li>
                 <li><b>Partner 2:</b> {{ p2 }}</li>
+                <li><b>Protease-Inhibitor?:</b> 
+                    {% if job_object.is_PI > 0 %}
+                        Yes
+                    {% else %}
+                        No
+                    {% endif %}
+                </li>
         </ul>
     </div>
 </div>
@@ -215,14 +226,15 @@ localStorage.setItem("job_descriptions", JSON.stringify(n_jobs_desc))
     <div class="{% if job_object.status >= 2 %} small-12 small-centered columns end {% else %} small-4 columns end {% endif %}">
         <table {% if job_object.status >= 2 %} style="margin:auto;margin-bottom:2rem" {% endif %}>
             <thead>
-                <th class="text-center">Mutated Chain</th>
-                <th class="text-center">Mutation</th>
+                <th class="text-center" style="white-space:nowrap">Mutated Chain</th>
+                <th class="text-center" style="white-space:nowrap">Mutation</th>
                 {% if job_object.status >= 2 %}
-                <th class="text-center">&Delta;&Delta;G</th>
-                <th class="text-center"> Interface? </th>
-                <th class="text-center"> Deleterious?</th>
-                <th class="text-center"> Confidence </th>
-                <th class="text-center" style="white-space:nowrap">Mutant PDB</th>
+                <th class="text-center" style="white-space:nowrap">&Delta;&Delta;G <a href="{% url 'sunddg:helpinfo' %}#DDG" target="_blank"><i class="fi-info small"></i></a></th>
+                <th class="text-center" style="white-space:nowrap"> Interface? <a href="{% url 'sunddg:helpinfo' %}#interface" target="_blank"><i class="fi-info small"></i></a></th>
+                <th class="text-center" style="white-space:nowrap"> Deleterious? <a href="{% url 'sunddg:helpinfo' %}#deleterious" target="_blank"><i class="fi-info small"></i></a></th>
+                <th class="text-center" style="white-space:nowrap"> Confidence <a href="{% url 'sunddg:helpinfo' %}#confidence" target="_blank"><i class="fi-info small"></i></a></th>
+                <th class="text-center" style="white-space:nowrap">Mutant PDB <a href="{% url 'sunddg:helpinfo' %}#structure" target="_blank"><i class="fi-info small"></i></a></th>
+                <th class="text-center" style="white-space:nowrap">Homologous binding sites <a href="{% url 'sunddg:helpinfo' %}#ibis" target="_blank"><i class="fi-info small"></i></a></th>
                 {% endif %}
             </thead>
             <tbody>
@@ -232,19 +244,21 @@ localStorage.setItem("job_descriptions", JSON.stringify(n_jobs_desc))
                 <td class="subheader text-center">{{res.mutation}}</td>
                 {% if job_object.status >= 2 %}
                 <td class="subheader text-center"><b>{{res.ddg}}</b></td>
-                <td class="text-center"> 
+                <td class="subheader text-center"> 
                     {% if res.interface > 0 %}
                         Yes
                     {% else %}
                         No
                     {% endif %}</td>
-                <td class="text-center">{% if res.deleterious > 0 %}
+                <td class="subheader text-center">{% if res.deleterious > 0 %}
                         Yes
                     {% else %}
                         No
                     {% endif %}</td>
-                <td class="text-center">{{res.confidence}}</td>
-                <td class="subheader text-center" style="white-space:nowrap"><a href="{% url 'sunddg:download_pdb_mut' job_object.job res.id %}">Download</a></td> 
+                <td class="subheader text-center">{{res.confidence}}</td>
+                <td class="subheader text-center" style="white-space:nowrap"><a href="{% url 'sunddg:download_pdb_mut' job_object.job res.id %}">Download</a></td>
+                <td class="subheader text-center" style="white-space:nowrap">
+                <a href="{% url 'sunddg:ibis' %}?pdb={{pdb_id|upper}}&chain={{res.target_chain|replace_decrease}}&mutation={{res.mutation}}" data-reveal-id="ibisModal" data-reveal-ajax="true">Explore</a></td>
                 {% endif %}
             </tr>
             {% endfor %}
@@ -265,16 +279,21 @@ localStorage.setItem("job_descriptions", JSON.stringify(n_jobs_desc))
 {% endif %}
 
 
+<div id="ibis_loader" style="display:none; position: fixed; top: 30%; left: 50%; margin-top: -50px; margin-left: -50px; z-index: 1005;"><img src="{%  static 'myimgs/atom.GIF' %}" /></div>
+<div class='reveal-modal' id='ibisModal' data-reveal></div>
+
 {% if job_object.status < 2 and job_object.status > -100 %}
 <hr>
 <div class="row">
     <div class="small-12 columns">
-        <p>This page will reload automatically in 5 minutes.</p>
+        <p>This page will reload automatically in 1 minute.</p>
     </div>
 </div>
 
 <script>
-    setTimeout("location.reload(true);",300000);
+$(document).ready(function() {
+
+    setTimeout("location.reload(true);",60000);
     $(document).foundation({
       abide : {
         patterns: {
@@ -283,8 +302,33 @@ localStorage.setItem("job_descriptions", JSON.stringify(n_jobs_desc))
         }
       }
     });
+    
+});
 </script>
 
 {% endif %}
+
+<script>
+$(document).ready(function() {
+    $(document).foundation();
+    
+/*    $( document ).ajaxError(function() {
+	$('#ibisModal').hide();
+	$('.reveal-modal-bg').hide();
+        $("#ibis_loader").hide();
+	alert('This option is temporarily not available');
+     });*/
+        
+    $(document).on('open.fndtn.reveal', '[data-reveal]', function () {
+        $("#ibis_loader").show();
+     });
+
+    $(document).on('opened.fndtn.reveal', '[data-reveal]', function () {
+        $("#ibis_loader").hide();
+     });
+
+});
+</script>
+
 
 {% endblock %}

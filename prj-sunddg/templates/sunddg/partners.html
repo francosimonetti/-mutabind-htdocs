@@ -27,6 +27,10 @@
     /*#partner1 {background:rgba(0, 116, 217, 0.4)}
       #partner2 {background:rgba(57, 204, 204, 0.4)}*/
 
+    #info_status{
+        color:#0370DF;
+        cursor:pointer;
+    }
   </style>
 {% endblock %}
 
@@ -73,8 +77,8 @@
             <div class="panel radius data_panel">
                 <p style="margin-bottom:0">
                     {% if pdbid %}
-                        <b>PDB id</b>: <a target="_blank" href="http://www.rcsb.org/pdb/explore/explore.do?structureId={{pdbid}}">{{pdbid|upper}}</a>
-                        <!-- Check Interactions at MMDB<a target="_blank" href="http://www.ncbi.nlm.nih.gov/Structure/mmdb/mmdbsrv.cgi?uid={{pdbid|safe}}"><i class="fi-page-export small"></i></a> -->
+                        <b>PDB id</b>: <a target="_blank" href="//www.rcsb.org/pdb/explore/explore.do?structureId={{pdbid}}">{{pdbid|upper}}</a>
+                        <!-- Check Interactions at MMDB<a target="_blank" href="//www.ncbi.nlm.nih.gov/Structure/mmdb/mmdbsrv.cgi?uid={{pdbid|safe}}"><i class="fi-page-export small"></i></a> -->
                     {% else %}        
                         <b>PDB file</b>: {{pdb_filename}}
                     {% endif %}
@@ -84,55 +88,104 @@
                         <p class="overflowtext">
 
                             {% if job_object.firstmodelwarning > 0 %}
-                                **Warning**: <span class="has-tip radius" data-tooltip aria-haspopup="true" style="font-weight:normal" title="The uploaded PDB contains more than one MODEL. First model has been used as default">The uploaded PDB contains more than one MODEL. First model has been used as default</span>
+                                **Warning**: <span class="has-tip radius" data-tooltip aria-haspopup="true" style="font-weight:normal" title="The uploaded PDB contains more than one MODEL. First model has been used as default">The uploaded PDB contains more than one MODEL. First model has been used as default</span><br>
                             {% endif %}
 
                             {% for chain in content.chains %}
-                                {% if forloop.counter <= 8 %}
-                                    <!-- Chain {{chain}}<span id="chain-{{chain}}"  title=""></span><br>  {# {{content|get_at_index:chain|length}} residues.  #} -->
-                                    Chain {{chain}}
-                                    {% if chain_descriptions %}
-                                        : <span class="has-tip radius" data-tooltip aria-haspopup="true" style="font-weight:normal" title="{{chain_descriptions|get_at_index_simple:chain}} {% if content.symmetry_chains and content.symmetry_chains|get_at_index_simple:chain %}- Identical chain to {{content.symmetry_chains|get_at_index_simple:chain}}
-                                            {% endif %}">
-                                            {{chain_descriptions|get_at_index_simple:chain}}
-                                            {% if content.symmetry_chains and content.symmetry_chains|get_at_index_simple:chain %}
-                                                - Identical chain to {{content.symmetry_chains|get_at_index_simple:chain}}
-                                            {% endif %}
-                                        </span>
-                                    {% endif %}
-                                    <br>
-                                {% endif %}
-                            {% endfor %}
-
-                        {% if content.chains|length > 8 %}
-                        <div id="info_data" style="display:none">
-                            <p class="overflowtext">
-                                {% for chain in content.chains %}
-                                    {% if forloop.counter > 8 %}
+                                 {% if job_object.firstmodelwarning > 0 %}   {# If there is first model warning, show only 8 chains, 9 otherwise #}
+                                    {% if forloop.counter <= 8 %}
                                         Chain {{chain}}
-                                        {% if chain_descriptions %} 
-                                                : <span class="has-tip radius" data-tooltip aria-haspopup="true" style="font-weight:normal" title="{{chain_descriptions|get_at_index_simple:chain}} {% if content.symmetry_chains and content.symmetry_chains|get_at_index_simple:chain %}- Identical chain to {{content.symmetry_chains|get_at_index_simple:chain}}
-                                            {% endif %}">
-                                            {{chain_descriptions|get_at_index_simple:chain}}
-                                            {% if content.symmetry_chains and content.symmetry_chains|get_at_index_simple:chain %}
-                                                - Identical chain to {{content.symmetry_chains|get_at_index_simple:chain}}
-                                            {% endif %}</span>
+                                        {% if chain_descriptions %}
+                                            : <span class="has-tip radius" data-tooltip aria-haspopup="true" style="font-weight:normal" title="{{chain_descriptions|get_at_index_simple:chain}} {% if content.symmetry_chains and content.symmetry_chains|get_at_index_simple:chain %}- Identical chain to {{content.symmetry_chains|get_at_index_simple:chain}}
+                                                {% endif %}">
+                                                {{chain_descriptions|get_at_index_simple:chain}}
+                                                {% if content.symmetry_chains and content.symmetry_chains|get_at_index_simple:chain %}
+                                                    - Identical chain to {{content.symmetry_chains|get_at_index_simple:chain}}
+                                                {% endif %}
+                                            </span>
                                         {% endif %}
                                         <br>
                                     {% endif %}
-                                {% endfor %}
-                            </p>
-                        </div>
-                        
+                                {% else %}
+                                    {% if forloop.counter <= 9 %}
+                                        Chain {{chain}}
+                                        {% if chain_descriptions %}
+                                            : <span class="has-tip radius" data-tooltip aria-haspopup="true" style="font-weight:normal" title="{{chain_descriptions|get_at_index_simple:chain}} {% if content.symmetry_chains and content.symmetry_chains|get_at_index_simple:chain %}- Identical chain to {{content.symmetry_chains|get_at_index_simple:chain}}
+                                                {% endif %}">
+                                                {{chain_descriptions|get_at_index_simple:chain}}
+                                                {% if content.symmetry_chains and content.symmetry_chains|get_at_index_simple:chain %}
+                                                    - Identical chain to {{content.symmetry_chains|get_at_index_simple:chain}}
+                                                {% endif %}
+                                            </span>
+                                        {% endif %}
+                                        <br>
+                                    {% endif %}
+                                {% endif %}
+                            {% endfor %}
+
+                        {% if job_object.firstmodelwarning > 0 %}    {# If there is first model warning, show after 8 chains, 9 otherwise #} 
+                            {% if content.chains|length > 8 %}
+                            <div id="info_data" style="display:none">
+                                <p class="overflowtext">
+                                    {% for chain in content.chains %}
+                                        {% if forloop.counter > 8 %}
+                                            Chain {{chain}}
+                                            {% if chain_descriptions %} 
+                                                    : <span class="has-tip radius" data-tooltip aria-haspopup="true" style="font-weight:normal" title="{{chain_descriptions|get_at_index_simple:chain}} {% if content.symmetry_chains and content.symmetry_chains|get_at_index_simple:chain %}- Identical chain to {{content.symmetry_chains|get_at_index_simple:chain}}
+                                                {% endif %}">
+                                                {{chain_descriptions|get_at_index_simple:chain}}
+                                                {% if content.symmetry_chains and content.symmetry_chains|get_at_index_simple:chain %}
+                                                    - Identical chain to {{content.symmetry_chains|get_at_index_simple:chain}}
+                                                {% endif %}</span>
+                                            {% endif %}
+                                            <br>
+                                        {% endif %}
+                                    {% endfor %}
+                                </p>
+                            </div>
+                            {% endif %}
+                        {% else %}
+                            {% if content.chains|length > 9 %}
+                            <div id="info_data" style="display:none">
+                                <p class="overflowtext">
+                                    {% for chain in content.chains %}
+                                        {% if forloop.counter > 9 %}
+                                            Chain {{chain}}
+                                            {% if chain_descriptions %} 
+                                                    : <span class="has-tip radius" data-tooltip aria-haspopup="true" style="font-weight:normal" title="{{chain_descriptions|get_at_index_simple:chain}} {% if content.symmetry_chains and content.symmetry_chains|get_at_index_simple:chain %}- Identical chain to {{content.symmetry_chains|get_at_index_simple:chain}}
+                                                {% endif %}">
+                                                {{chain_descriptions|get_at_index_simple:chain}}
+                                                {% if content.symmetry_chains and content.symmetry_chains|get_at_index_simple:chain %}
+                                                    - Identical chain to {{content.symmetry_chains|get_at_index_simple:chain}}
+                                                {% endif %}</span>
+                                            {% endif %}
+                                            <br>
+                                        {% endif %}
+                                    {% endfor %}
+                                </p>
+                            </div>
+                            {% endif %}
                         {% endif %}
                     </div>
                 </div>
-                {% if content.chains|length > 8 %}
-                <div class="row" style="margin-top:0.4rem">
-                    <div class="small-12 columns">
-                        <button id="info_status" style="margin-bottom:0;padding-top:0.2rem;padding-bottom:0.2rem;margin-top:0.2rem" class="button round tiny right">Show more</button><!-- <i  class="fi-x large"></i> -->
+                {% if job_object.firstmodelwarning > 0 %}  {# If there is first model warning, show after 8 chains, 9 otherwise #}
+                    {% if content.chains|length > 9 %}
+                    <div class="row" style="margin-top:0.4rem">
+                        <div class="small-12 columns">
+                            <!-- <button id="info_status" style="margin-bottom:0;padding-top:0.2rem;padding-bottom:0.2rem;margin-top:0.2rem" class="button round tiny right">Show more</button> -->
+                            <span id="info_status" style="font-size:0.8rem">Show More..</span>
+                        </div>
                     </div>
-                </div>
+                    {% endif %}
+                {% else %}
+                    {% if content.chains|length > 8 %}
+                    <div class="row" style="margin-top:0.4rem">
+                        <div class="small-12 columns">
+                            <!-- <button id="info_status" style="margin-bottom:0;padding-top:0.2rem;padding-bottom:0.2rem;margin-top:0.2rem" class="button round tiny right">Show more</button> -->
+                            <span id="info_status" style="font-size:0.8rem">Show More..</span>
+                        </div>
+                    </div>
+                    {% endif %}
                 {% endif %}
             </div>
     </div>
@@ -184,7 +237,7 @@
 
 <div class="row">
     <div class="small-9 columns">
-    <br><p style="margin-bottom:0.5rem"><b>Drag and drop</b> chains to select interaction partners.<span data-tooltip data-options="width:300" aria-haspopup="true" class="has-tip tip-top radius" title="<p>For Bioassemblies, if any protein or nucleotide molecules in the structure were generated by applying transformations from crystallographic symmetry, they are depicted with labels that have alphanumeric combinations (for example, 'A_1') indicating the source molecule from which they were generated and the copy number.</p><img src='{% static 'mycss/chain_help_labels.png' %}' />"><i class="fi-info small"></i></span> 
+    <br><p style="margin-bottom:0.5rem"><b>Drag and drop</b> chains to select interaction partners.<span data-tooltip data-options="width:300" aria-haspopup="true" class="has-tip tip-top radius" title="<p>For Bioassemblies, if any protein or nucleotide molecules in the structure were generated by applying transformations from crystallographic symmetry, they are depicted with labels that have alphanumeric combinations (for example, 'A_1') indicating the source molecule from which they were generated and the number of the transformation matrix applied (REMARK 350 BIOMT).</p><img src='{% static 'mycss/chain_help_labels2.png' %}' />"><i class="fi-info small"></i></span> 
         {% if job_object.is_example > 0 %}
             <br><span class="subheader">Example: <a id="load_example">Chain E as Partner 1, Chain I as Partner 2</a></span>
         {% endif %}</p>
@@ -219,6 +272,19 @@
 
 <script>
 
+// For detecting GLmol support
+var c = function() {
+    if (window.WebGLRenderingContext) {
+        for (var a = document.createElement("canvas"), d = ["webgl", "experimental-webgl", "moz-webgl", "webkit-3d"], b = !1, c = 0; 4 > c; c += 1) try {
+            if ((b = a.getContext(d[c])) && "function" == typeof b.getParameter) return 1
+        } catch (p) {}
+        return -1
+    }
+    return 0
+};
+
+
+
 /*$.fn.overflown=function(){var e=this[0];return e.scrollHeight>e.clientHeight||e.scrollWidth>e.clientWidth;}
 */
 var unit = "{{unit}}";
@@ -247,8 +313,10 @@ for (var i in chain_data["chain_models"])
 var all_res_to_zoom = [];
 
 {% if pdbid %}
-    var pdbid = "{{pdbid|safe}}";
 
+    try {
+
+    var pdbid = "{{pdbid|safe}}";
     var pdb = new GLmol('pdb_container');
 
     var colors = [];
@@ -275,15 +343,32 @@ var all_res_to_zoom = [];
         if (unit == "bio")
         {   
             var actual_it = 1;
-            var all_it = 0;
+            //var all_it = 0
+            var all_it = this.protein.biomtChainsStart;
+            // console.log(all_it)
+            // console.log(this.protein.biomtMatrices)
             this.protein.appliedMatrix = new THREE.Matrix4();
-            for (var i = 0; i < this.protein.biomtMatrices.length ; i++)
+            
+            console.log("biomtChainsStart")
+            console.log(this.protein.biomtChainsStart)
+            console.log("biomtRead")
+            console.log(this.protein.biomtRead)
+            console.log("biomtChainsEnd")
+            console.log(this.protein.biomtChainsEnd)
+            console.log("biomtMolecules")
+            console.log(this.protein.biomtMolecules)
+
+            // for (var i = this.protein.biomtChainsStart; i < this.protein.biomtMatrices.length ; i++)
+            for (var i = this.protein.biomtChainsStart+1; i <= this.protein.biomtChainsEnd; i++)
+            //for (var i = 0; i < this.protein.biomtMatrices.length ; i++)
             {
+                console.log(i)
                 mat = this.protein.biomtMatrices[i]
                 if ( mat == undefined ) continue;
                 if ( mat.isIdentity()) {
                     console.log("identity mat")
                     chain_arr = this.protein.biomtChains[all_it].split(",")
+                    console.log(chain_arr)
                     chains2select = []
                     for (var j in chain_arr)
                     {
@@ -300,6 +385,7 @@ var all_res_to_zoom = [];
                     this.drawCartoon(asu, all, this.curveWidth, this.thickness);
                     this.modelGroup.add(asu);
                     drawn_chains += chains2select.length;
+                    all_it++;
                 }
                 else {
                     var asu = new THREE.Object3D();
@@ -310,6 +396,7 @@ var all_res_to_zoom = [];
                     
                     // select only chains to which this matrix should be applied
                     chain_arr = this.protein.biomtChains[all_it].split(",")
+                    console.log(chain_arr)
                     chains2select = []
                     for (var j in chain_arr)
                     {
@@ -327,13 +414,15 @@ var all_res_to_zoom = [];
                     drawn_chains += chains2select.length;
                     for (var j = 0; j < 16; j++) this.protein.appliedMatrix.elements[j] += mat.elements[j];
                     actual_it++;
+                    all_it++;
                 }
-                all_it++;
+                //all_it++;
             }
             this.protein.appliedMatrix.multiplyScalar(actual_it);
         }
         else
         {
+            all_res_to_zoom = all_res_to_zoom.concat(all)
             this.drawCartoon(asu, all, this.curveWidth, this.thickness);
             this.modelGroup.add(asu);
         }
@@ -346,7 +435,7 @@ var all_res_to_zoom = [];
    pdb.show();*/
 
    var time = new Date();
-    /*$.get("http://www.rcsb.org/pdb/files/{{pdbid}}.pdb", function(ret) {
+    /*$.get("//www.rcsb.org/pdb/files/{{pdbid}}.pdb", function(ret) {
       $("#pdb_container_src").val(ret);
         pdb.loadMolecule();
         console.log("downloaded in " + (+new Date() - time) + "ms");
@@ -354,7 +443,9 @@ var all_res_to_zoom = [];
 
     var content = '{{ pdbasu |escapejs }}'
     $("#pdb_container_src").val(content);
-    pdb.loadMolecule();
+    var biomt_num = '{{ bioassembly |safe}}'
+    if (biomt_num == "None"){ biomt_num = undefined; }
+    pdb.loadMolecule(undefined, biomt_num);
     console.log("downloaded in " + (+new Date() - time) + "ms");
     
     $("#pleasewait").empty()
@@ -374,14 +465,29 @@ var all_res_to_zoom = [];
         $(".chain-"+chainname).css("background", "#"+hexColor)
     }
 
-var actual_it = 1;
-for (var i = 0; i < pdb.protein.biomtMatrices.length ; i++)
-{   
-    mat = pdb.protein.biomtMatrices[i]
-    if ( mat == undefined || mat.isIdentity()) continue;
-    temp = colors.slice((chain_num*actual_it), (chain_num*(actual_it)+chain_num))
-    actual_it++
-}
+    var actual_it = 1;
+    for (var i = 0; i < pdb.protein.biomtMatrices.length ; i++)
+    {   
+        mat = pdb.protein.biomtMatrices[i]
+        if ( mat == undefined || mat.isIdentity()) continue;
+        temp = colors.slice((chain_num*actual_it), (chain_num*(actual_it)+chain_num))
+        actual_it++
+    }
+
+    }
+    catch(err)
+    {
+        var m = c();
+        if (1 > m) {
+            var q = ""
+            q = m ? 'This page requires <a href="//get.webgl.org/">WebGL</a> in order to interactively view 3D structures. However, the WebGL function in your browser is not enabled. To see the interactive view of the structure, modify the settings in your web browser to enable WebGL.' : 'This page requires <a href="//get.webgl.org/">WebGL</a> in order to interactively view 3D structures. However, your browser does not support WebGL. To see the interactive view of the structure, upgrade your web browser to a newer version.'
+        }
+
+
+        $("#pleasewait").empty()
+        errmsg = '<div class="small-12 columns alert-box alert radius">PDB structure viewer could not be loaded. '+q+'</div>'
+        $("#pleasewait").html(errmsg)
+    }
 
 {% endif %}
 
@@ -514,11 +620,16 @@ $(document).ready(function(){
 
 {% if pdb_filename %}
     
+    try {
+
     var colors = [];
 
     var acum = chain_data["chain_models"].length
     console.log(acum)
     var chain_num = chain_data["chains"].length;
+
+    // used for multiple MODELs
+    //var chains_renamed = {{ chains_renamed |safe}}
 
     for (var i = 0; i<acum; i++)
     {
@@ -530,6 +641,8 @@ $(document).ready(function(){
 
     pdb.defineRepresentation = function() {
         var all = this.getChain(this.getAllAtoms(),chain_data["chains"]);
+        // used for multple MODELs
+        //var all = this.getChain(this.getAllAtoms(),chains_renamed);
         all_res_to_zoom = all_res_to_zoom.concat(all)
         this.colorByChain(all, colors.slice(0,acum));
 
@@ -557,7 +670,20 @@ $(document).ready(function(){
         $(".chain-"+chainname).css("background", "#"+hexColor)
     }
 
-    
+    }
+    catch(err)
+    {
+        var m = c();
+        if (1 > m) 
+        {
+            var q = ""
+            q = m ? 'This page requires <a href="//get.webgl.org/">WebGL</a> in order to interactively view 3D structures. However, the WebGL function in your browser is not enabled. To see the interactive view of the structure, modify the settings in your web browser to enable WebGL.' : 'This page requires <a href="//get.webgl.org/">WebGL</a> in order to interactively view 3D structures. However, your browser does not support WebGL. To see the interactive view of the structure, upgrade your web browser to a newer version.'
+        }
+
+        $("#pleasewait").empty()
+        errmsg = '<div class="small-12 columns alert-box alert radius">PDB structure viewer could not be loaded. '+q+'</div>'
+        $("#pleasewait").html(errmsg)
+    }
 
 {% endif %}
 
@@ -565,13 +691,14 @@ $(document).foundation();
 
 $("#reset_zoom").on('click', function(){
     pdb.doFunc(function(mol) {
+        // console.log(all_res_to_zoom)
         pdb.zoomInto(all_res_to_zoom);
         mol.show()});
     return false;
 });
 
 
-$("#info_status").on('click', function(){
+/*$("#info_status").on('click', function(){
     if ($("#info_status").html() == "Show more")
     {
         $(".data_panel").css("height", "auto")
@@ -587,7 +714,27 @@ $("#info_status").on('click', function(){
             $(".data_panel").css("height", "340px")    
         }
     } 
+})*/
+
+var info_status = true;
+
+$("#info_status").on('click', function(){
+    if (info_status)
+    {
+        $(".data_panel").css("height", "auto")
+        $("#info_data").css("display", "block")
+        $("#info_status").html("Show less..")
+        info_status = false;
+    }
+    else
+    {
+        $("#info_data").css("display", "none")
+        $("#info_status").html("Show more..")
+        $(".data_panel").css("height", "340px")  
+        info_status = true;  
+    } 
 })
+
 
 
 
